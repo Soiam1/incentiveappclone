@@ -3,7 +3,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import RequireAuth from "../auth/requireAuth";
-
+import HistoryPage from '../pages/salesman/HistoryPage';
 // Salesman screens
 import SalesmanLanding from "../pages/salesman/SalesmanLanding";
 import ProfilePage from "../pages/salesman/ProfilePage";
@@ -62,7 +62,7 @@ export default function AppRouter() {
             </RequireRole>
           }
         />
-
+        <Route path="/history" element={<RequireAuth><HistoryPage /></RequireAuth>} />
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

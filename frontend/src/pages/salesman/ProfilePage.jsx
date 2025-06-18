@@ -50,6 +50,8 @@ export default function ProfilePage() {
 
   if (!profile || loading) return <p>Loading…</p>;
 
+  const last = summary?.history?.[0];
+
   return (
     <div className="p-4 bg-pink-100 min-h-screen">
       <div className="app-header p-4">
@@ -101,48 +103,39 @@ export default function ProfilePage() {
 
       {showHistory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow w-[90%] max-w-md max-h-[90vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="p-4 border-b bg-white sticky top-0 z-10">
-              <h3 className="text-lg font-bold">Withdrawal History</h3>
-            </div>
+          <div className="bg-white p-4 rounded shadow w-[90%] max-w-md">
+            <h3 className="text-lg font-bold mb-4">Last Withdrawal</h3>
+            {!last ? (
+              <p className="text-sm text-gray-500">No withdrawal history yet.</p>
+            ) : (
+              <table className="w-full text-sm border border-gray-300">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="text-left p-2 border-b">Amount</th>
+                    <th className="text-left p-2 border-b">Status</th>
+                    <th className="text-left p-2 border-b">Date</th>
+                    <th className="text-left p-2 border-b">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="p-2">₹{last.amount}</td>
+                    <td className="p-2">{last.status.toUpperCase()}</td>
+                    <td className="p-2 text-xs text-gray-600">
+                      {toLocalTime(last.timestamp).toLocaleString()}
+                    </td>
+                    <td className="p-2 text-xs text-red-600">{last.remarks || "-"}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
 
-            {/* Scrollable Table Section */}
-            <div className="overflow-y-auto px-4 py-2 flex-1">
-              {summary.history.length === 0 ? (
-                <p className="text-sm text-gray-500">No withdrawal history yet.</p>
-              ) : (
-                <table className="w-full text-sm border border-gray-300">
-                  <thead className="bg-gray-200 sticky top-0 z-10">
-                    <tr>
-                      <th className="text-left p-2 border-b">Amount</th>
-                      <th className="text-left p-2 border-b">Status</th>
-                      <th className="text-left p-2 border-b">Date</th>
-                      <th className="text-left p-2 border-b">Remarks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {summary.history.map((item, index) => (
-                      <tr key={index} className="border-b">
-                        <td className="p-2">₹{item.amount}</td>
-                        <td className="p-2">{item.status.toUpperCase()}</td>
-                        <td className="p-2 text-xs text-gray-600">
-                          {toLocalTime(item.timestamp).toLocaleString()}
-                        </td>
-                        <td className="p-2 text-xs text-red-600">
-                          {item.remarks || "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {/* Footer Button */}
-            <div className="p-4 border-t bg-white sticky bottom-0 z-10">
-              <Button className="bg-gray-600 text-white w-full" onClick={() => setShowHistory(false)}>
+            <div className="mt-4 flex justify-between">
+              <Button className="bg-gray-600 text-white" onClick={() => setShowHistory(false)}>
                 Close
+              </Button>
+              <Button className="bg-blue-700 text-white" onClick={() => navigate('/history')}>
+                Show All
               </Button>
             </div>
           </div>
