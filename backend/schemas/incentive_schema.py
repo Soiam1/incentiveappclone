@@ -10,3 +10,8 @@ class IncentiveOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class IncentiveSchema(BaseModel):
+    day_amount: float
+    week_amount: float
+    month_amount: float

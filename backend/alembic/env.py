@@ -36,6 +36,7 @@ from models import (
     outlet,
     streak,
     verticle,
+    leaderboardincentive
 )
 
 

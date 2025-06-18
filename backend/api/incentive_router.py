@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from datetime import date
 from sqlalchemy import func
-from models.incentive import Incentive
-from schemas.incentive_schema import IncentiveOut
+from models.incentive import LeaderboardIncentive, Incentive
+from schemas.incentive_schema import IncentiveOut, IncentiveSchema
 from schemas.claim_schema import ClaimRequest, ClaimOut
+from schemas.incentive_schema import IncentiveSchema
+
 from crud.incentive_crud import (
     toggle_incentive_visibility,
     get_incentives_for_salesman,
@@ -155,3 +157,25 @@ def get_rank(
             return {"rank": i + 1}
 
     return {"rank": None}
+
+@router.post("/admin/set-leaderboard-incentives")
+def set_incentives(payload: IncentiveSchema, db: Session = Depends(get_db)):
+    existing = db.query(LeaderboardIncentive).first()
+    if existing:
+        existing.day_amount = payload.day_amount
+        existing.week_amount = payload.week_amount
+        existing.month_amount = payload.month_amount
+    else:
+        new_entry = LeaderboardIncentive(**payload.model_dump())
+        db.add(new_entry)
+    db.commit()
+    return {"message": "Incentives updated"}
+
+@router.get("/public/leaderboard-incentives")
+def get_incentives(db: Session = Depends(get_db)):
+    data = db.query(LeaderboardIncentive).first()
+    return {
+        "day": data.day_amount if data else 0,
+        "week": data.week_amount if data else 0,
+        "month": data.month_amount if data else 0
+    }
