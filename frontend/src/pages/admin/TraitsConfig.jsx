@@ -1,5 +1,3 @@
-// frontend/src/pages/admin/TraitsConfig.jsx
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import API_BASE_URL from "../../config";
@@ -78,31 +76,45 @@ export default function TraitsConfig() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-lg font-bold mb-4">🎯 Traits Configuration</h2>
+    <div className="p-6 space-y-10">
+      <h2 className="text-2xl font-bold text-gray-800 underline">Traits Configuration</h2>
 
       {/* ➕ Add New Trait */}
-      <div className="flex gap-2 mb-6">
-        <Input
-          placeholder="Trait Name"
-          value={newTrait.name}
-          onChange={(e) => setNewTrait({ ...newTrait, name: e.target.value })}
-        />
-        <Input
-          placeholder="% Incentive"
-          type="number"
-          value={newTrait.percentage}
-          onChange={(e) => setNewTrait({ ...newTrait, percentage: e.target.value })}
-        />
-        <Button onClick={handleCreateTrait}>Add</Button>
+      <div className="border p-6 rounded-xl shadow-sm bg-white space-y-4">
+        <h3 className="text-lg font-semibold text-gray-700">Add New Trait</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Trait Name</label>
+            <Input
+              placeholder="Trait Name"
+              value={newTrait.name}
+              onChange={(e) => setNewTrait({ ...newTrait, name: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">% Incentive</label>
+            <Input
+              placeholder="% Incentive"
+              type="number"
+              value={newTrait.percentage}
+              onChange={(e) => setNewTrait({ ...newTrait, percentage: e.target.value })}
+            />
+          </div>
+          <div className="flex items-end">
+            <Button onClick={handleCreateTrait}>Add Trait</Button>
+          </div>
+        </div>
       </div>
 
       {/* 📋 Existing Traits */}
-      <div className="grid gap-4">
+      <div className="space-y-4">
         {traits.map((t) => (
-          <div key={t.trait} className="border p-3 rounded flex justify-between items-center">
+          <div
+            key={t.trait}
+            className="border p-5 rounded-xl shadow-sm bg-white flex flex-col md:flex-row md:justify-between md:items-center gap-4"
+          >
             <div>
-              <p className="font-semibold">{t.trait}</p>
+              <p className="font-semibold text-gray-800 text-lg">{t.trait}</p>
               <p className="text-sm text-gray-600">Incentive: {t.percentage}%</p>
               <p className="text-sm">
                 Visibility:{" "}
@@ -111,11 +123,9 @@ export default function TraitsConfig() {
                 </span>
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-3">
               <Button
-                onClick={() =>
-                  handleUpdateTrait(t.trait, { visible: !t.visible })
-                }
+                onClick={() => handleUpdateTrait(t.trait, { visible: !t.visible })}
               >
                 {t.visible ? "Hide" : "Show"}
               </Button>
@@ -129,7 +139,10 @@ export default function TraitsConfig() {
               >
                 Edit %
               </Button>
-              <Button onClick={() => handleDeleteTrait(t.trait)} className="bg-red-600 hover:bg-red-700">
+              <Button
+                onClick={() => handleDeleteTrait(t.trait)}
+                className="bg-red-600 hover:bg-red-700"
+              >
                 Delete
               </Button>
             </div>
