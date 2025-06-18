@@ -41,7 +41,7 @@ export default function ProfilePage() {
       });
 
       alert("Withdrawal request submitted!");
-      window.location.reload(); // or refetch summary instead
+      window.location.reload();
     } catch (err) {
       alert("Error submitting withdrawal request.");
       console.error(err);
@@ -55,8 +55,7 @@ export default function ProfilePage() {
       <div className="app-header p-4">
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
-      
-      
+
       <div className="mt-6 flex flex-col items-center">
         <div className="w-24 h-24 rounded-full bg-gray-300 mb-4" />
         <Card className="p-4 w-full max-w-xs">
@@ -66,16 +65,16 @@ export default function ProfilePage() {
           <p><strong>Verticle:</strong>   {profile.verticle}</p>
         </Card>
       </div>
+
       <div className="mt-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="text-sm bg-white text-red-600 border border-red-600 px-2 py-2 rounded-full"
-              >
-                ← Back
-              </button>
-            </div>
-      <h2 className="text-lg font-bold mb-2 underline"></h2>
-      <h2 className="text-lg font-bold mb-2 underline"></h2>
+        <button
+          onClick={() => navigate(-1)}
+          className="text-sm bg-white text-red-600 border border-red-600 px-2 py-2 rounded-full"
+        >
+          ← Back
+        </button>
+      </div>
+
       <div className="border-t border-gray-300 my-2" />
       <div className="mt-6 flex flex-col items-center">
         <Card className="p-4 w-full max-w-xs">
@@ -100,24 +99,42 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      {/* Withdrawal History Modal */}
       {showHistory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded shadow max-h-[70vh] overflow-y-auto w-[90%] max-w-md">
+          <div className="bg-white p-4 rounded shadow w-[90%] max-w-md">
             <h3 className="text-lg font-bold mb-2">Withdrawal History</h3>
-            {summary.history.length === 0 ? (
-              <p className="text-sm text-gray-500">No withdrawal history yet.</p>
-            ) : (
-              <ul className="text-sm space-y-2">
-                {summary.history.map((item, index) => (
-                  <li key={index} className="border-b pb-1">
-                    <p>₹{item.amount} • {item.status.toUpperCase()}</p>
-                    <p className="text-xs text-gray-500">{toLocalTime(item.timestamp).toLocaleString()}</p>
-                    {item.remarks && <p className="text-xs text-red-600">Note: {item.remarks}</p>}
-                  </li>
-                ))}
-              </ul>
-            )}
+
+            <div className="max-h-[50vh] overflow-y-auto">
+              {summary.history.length === 0 ? (
+                <p className="text-sm text-gray-500">No withdrawal history yet.</p>
+              ) : (
+                <table className="w-full text-sm border border-gray-300">
+                  <thead className="bg-gray-200 sticky top-0">
+                    <tr>
+                      <th className="text-left p-2 border-b">Amount</th>
+                      <th className="text-left p-2 border-b">Status</th>
+                      <th className="text-left p-2 border-b">Timestamp</th>
+                      <th className="text-left p-2 border-b">Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.history.map((item, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="p-2">₹{item.amount}</td>
+                        <td className="p-2">{item.status.toUpperCase()}</td>
+                        <td className="p-2 text-xs text-gray-600">
+                          {toLocalTime(item.timestamp).toLocaleString()}
+                        </td>
+                        <td className="p-2 text-xs text-red-600">
+                          {item.remarks || "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
             <Button className="mt-4 bg-gray-600 text-white" onClick={() => setShowHistory(false)}>
               Close
             </Button>
