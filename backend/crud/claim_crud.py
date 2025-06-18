@@ -5,7 +5,6 @@ from models.salesman import Salesman
 from typing import Optional, List
 from fastapi import HTTPException
 from datetime import datetime
-from sqlalchemy import func
 
 def submit_claim(db: Session, salesman_id: int, amount: float, remarks: Optional[str] = None) -> Optional[Claim]:
     """
@@ -14,14 +13,12 @@ def submit_claim(db: Session, salesman_id: int, amount: float, remarks: Optional
     """
     salesman = db.query(Salesman).filter_by(id=salesman_id).first()
 
-    # Ensure salesman exists and has enough balance
     if not salesman or salesman.wallet_balance < amount:
         return None
 
-    # Deduct from wallet immediately
+    # ✅ Deduct wallet now
     salesman.wallet_balance -= amount
 
-    # Create the claim
     claim = Claim(
         salesman_id=salesman_id,
         amount=amount,
@@ -40,34 +37,18 @@ def submit_claim(db: Session, salesman_id: int, amount: float, remarks: Optional
     return claim
 
 
-
 def get_all_claims(db: Session) -> List[Claim]:
-    """
-    Admin: Return all submitted claims sorted by newest first.
-    """
     return db.query(Claim).order_by(Claim.timestamp.desc()).all()
 
 
 def get_claim_by_id(db: Session, claim_id: int) -> Claim:
-    """
-    Get a claim by its ID.
-    """
     claim = db.query(Claim).filter_by(id=claim_id).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
     return claim
 
 
-
-
-
 def approve_claim_by_id(db: Session, claim_id: int, tx_hash: Optional[str] = None) -> Claim:
-    """
-    Approve a pending claim (withdrawal request). Wallet was already deducted at submission,
-    so this only marks the claim as approved.
-    """
-
-    # Fetch the claim
     claim = db.query(Claim).filter_by(id=claim_id).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
@@ -75,7 +56,6 @@ def approve_claim_by_id(db: Session, claim_id: int, tx_hash: Optional[str] = Non
     if claim.status != "pending":
         raise HTTPException(status_code=400, detail="Claim is not pending")
 
-    # Check the salesman exists
     salesman = db.query(Salesman).filter_by(id=claim.salesman_id).first()
     if not salesman:
         raise HTTPException(status_code=404, detail="Salesman not found")
@@ -83,9 +63,8 @@ def approve_claim_by_id(db: Session, claim_id: int, tx_hash: Optional[str] = Non
     if claim.amount is None:
         raise HTTPException(status_code=400, detail="Claim amount is missing")
 
-    # ✅ Do NOT deduct wallet again — already deducted at submission time
+    # ✅ No wallet logic here
 
-    # Mark claim as approved
     claim.status = "approved"
     claim.tx_hash = tx_hash
     claim.updated_at = datetime.utcnow()
@@ -100,12 +79,7 @@ def approve_claim_by_id(db: Session, claim_id: int, tx_hash: Optional[str] = Non
     return claim
 
 
-
 def reject_claim_by_id(db: Session, claim_id: int, reason: Optional[str] = None) -> dict:
-    """
-    Reject a pending claim, refund the amount to the salesman's wallet,
-    and optionally store a rejection reason.
-    """
     claim = db.query(Claim).filter_by(id=claim_id, status="pending").first()
     if not claim:
         raise HTTPException(status_code=404, detail="Pending claim not found")
@@ -114,10 +88,9 @@ def reject_claim_by_id(db: Session, claim_id: int, reason: Optional[str] = None)
     if not salesman:
         raise HTTPException(status_code=404, detail="Salesman not found")
 
-    # Refund the amount back to wallet
+    # ✅ Refund to wallet
     salesman.wallet_balance += claim.amount
 
-    # Mark claim as rejected and update remarks
     claim.status = "rejected"
     if reason:
         claim.remarks = reason
@@ -132,8 +105,6 @@ def reject_claim_by_id(db: Session, claim_id: int, reason: Optional[str] = None)
     return {"message": "Claim rejected and amount refunded", "id": claim.id}
 
 
-
-
 def amend_and_approve_claim(db: Session, claim_id: int, new_amount: float, new_remarks: str):
     claim = db.query(Claim).filter_by(id=claim_id, status="pending").first()
     if not claim:
@@ -143,8 +114,7 @@ def amend_and_approve_claim(db: Session, claim_id: int, new_amount: float, new_r
     if not salesman:
         raise HTTPException(status_code=404, detail="Salesman not found")
 
-    # ✅ Removed wallet_balance check
-
+    # ✅ Reclaim extra incentives if amount is reduced
     diff = claim.amount - new_amount
     if diff > 0:
         incentives = (
@@ -158,7 +128,7 @@ def amend_and_approve_claim(db: Session, claim_id: int, new_amount: float, new_r
                 break
             if incentive.amount <= diff:
                 diff -= incentive.amount
-                db.delete(incentive)
+                incentive.amount = 0
             else:
                 incentive.amount -= diff
                 diff = 0
@@ -168,10 +138,7 @@ def amend_and_approve_claim(db: Session, claim_id: int, new_amount: float, new_r
     claim.remarks = new_remarks
     claim.updated_at = datetime.utcnow()
 
-    # 🔄 Wallet balance recomputed accurately
-    total_incentive = db.query(func.sum(Incentive.amount)).filter_by(salesman_id=salesman.id).scalar() or 0.0
-    total_withdrawn = db.query(func.sum(Claim.amount)).filter_by(salesman_id=salesman.id, status="approved").scalar() or 0.0
-    salesman.wallet_balance = max(0.0, total_incentive - total_withdrawn)
+    # ✅ Do NOT recompute wallet
 
     try:
         db.commit()

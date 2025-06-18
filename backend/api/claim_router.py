@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from schemas.claim_schema import ClaimRequest, ClaimOut, ClaimUpdateRequest, ClaimAmendApproveRequest
 from models.claim import Claim
+from models.salesman import Salesman
 from crud.claim_crud import (
     submit_claim,
     get_all_claims,
@@ -29,7 +30,6 @@ def request_withdrawal(
         raise HTTPException(status_code=400, detail="Insufficient wallet balance or invalid claim.")
     return claim
 
-
 @router.get("/my-claims", response_model=list[ClaimOut])
 def view_my_claims(
     db: Session = Depends(get_db),
@@ -46,14 +46,34 @@ def view_all_claims(
     db: Session = Depends(get_db),
     admin=Depends(get_current_user_role("admin"))
 ):
-    return get_all_claims(db)
+    claims = db.query(Claim).all()
+    salesman_map = {
+        s.id: s.name for s in db.query(Salesman.id, Salesman.name).all()
+    }
+    return [
+        {
+            **claim.__dict__,
+            "salesman_name": salesman_map.get(claim.salesman_id, f"#ID {claim.salesman_id}")
+        }
+        for claim in claims
+    ]
 
 @router.get("/claims/pending", response_model=list[ClaimOut])
 def view_pending_claims(
     db: Session = Depends(get_db),
     admin=Depends(get_current_user_role("admin"))
 ):
-    return db.query(Claim).filter_by(status="pending").order_by(Claim.timestamp.desc()).all()
+    pending_claims = db.query(Claim).filter_by(status="pending").order_by(Claim.timestamp.desc()).all()
+    salesman_map = {
+        s.id: s.name for s in db.query(Salesman.id, Salesman.name).all()
+    }
+    return [
+        {
+            **claim.__dict__,
+            "salesman_name": salesman_map.get(claim.salesman_id, f"#ID {claim.salesman_id}")
+        }
+        for claim in pending_claims
+    ]
 @router.post("/claims/{claim_id}/approve", response_model=ClaimOut)
 def approve_claim(
     claim_id: int,
