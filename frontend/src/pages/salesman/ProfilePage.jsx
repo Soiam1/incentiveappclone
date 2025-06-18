@@ -127,7 +127,7 @@ export default function ProfilePage() {
                         <td className="p-2">₹{item.amount}</td>
                         <td className="p-2">{item.status.toUpperCase()}</td>
                         <td className="p-2 text-xs text-gray-600">
-                          {toLocalTime(item.timestamp).toLocaleDateString()}
+                          {toLocalTime(item.timestamp).toLocaleString()}
                         </td>
                         <td className="p-2 text-xs text-red-600">
                           {item.remarks || "-"}
