@@ -53,43 +53,64 @@ export default function ProductManager() {
   };
 
   return (
-    <div className="p-6 space-y-8">
-      <h2 className="text-lg font-bold">📦 Product Management</h2>
+    <div className="p-6 space-y-10">
+      <h2 className="text-2xl font-bold text-gray-800">📦 Product Management</h2>
 
       {/* File Upload Section */}
-      <section className="space-y-3 border p-4 rounded shadow">
-        <h3 className="font-semibold">🗂 Bulk Upload (.csv/.xlsx)</h3>
-        <input type="file" accept=".xlsx,.csv" onChange={handleFileChange} />
-        <Button onClick={handleFileUpload}>Upload File</Button>
+      <section className="space-y-4 border border-gray-200 p-6 rounded-xl shadow-sm bg-white">
+        <h3 className="text-lg font-semibold text-gray-700">🗂 Bulk Upload (.csv/.xlsx)</h3>
+        <div className="space-y-3">
+          <input
+            type="file"
+            accept=".xlsx,.csv"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border file:rounded-md file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          <Button onClick={handleFileUpload}>Upload File</Button>
+        </div>
       </section>
 
-      {/* Manual Add/Update */}
-      <section className="space-y-3 border p-4 rounded shadow">
-        <h3 className="font-semibold">✍️ Manual Entry</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <Input
-            placeholder="Barcode"
-            value={manual.barcode}
-            onChange={(e) => setManual({ ...manual, barcode: e.target.value })}
-          />
-          <Input
-            placeholder="Verticle"
-            value={manual.verticle}
-            onChange={(e) => setManual({ ...manual, verticle: e.target.value })}
-          />
-          <Input
-            placeholder="Trait"
-            value={manual.trait}
-            onChange={(e) => setManual({ ...manual, trait: e.target.value })}
-          />
-          <Input
-            placeholder="RSP"
-            type="number"
-            value={manual.rsp}
-            onChange={(e) => setManual({ ...manual, rsp: e.target.value })}
-          />
+      {/* Manual Add/Update Section */}
+      <section className="space-y-4 border border-gray-200 p-6 rounded-xl shadow-sm bg-white">
+        <h3 className="text-lg font-semibold text-gray-700">✍️ Manual Product Entry</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Barcode</label>
+            <Input
+              placeholder="Enter barcode"
+              value={manual.barcode}
+              onChange={(e) => setManual({ ...manual, barcode: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Verticle</label>
+            <Input
+              placeholder="Enter verticle"
+              value={manual.verticle}
+              onChange={(e) => setManual({ ...manual, verticle: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Trait</label>
+            <Input
+              placeholder="Enter trait"
+              value={manual.trait}
+              onChange={(e) => setManual({ ...manual, trait: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">RSP</label>
+            <Input
+              type="number"
+              placeholder="Enter RSP"
+              value={manual.rsp}
+              onChange={(e) => setManual({ ...manual, rsp: e.target.value })}
+            />
+          </div>
         </div>
-        <Button onClick={handleManualSubmit}>Save Product</Button>
+        <div className="pt-4">
+          <Button onClick={handleManualSubmit}>Save Product</Button>
+        </div>
       </section>
     </div>
   );
