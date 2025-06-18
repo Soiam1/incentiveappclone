@@ -8,13 +8,13 @@ export default function Leaderboard() {
     day: [],
     week: [],
     month: [],
-    streak: [],
+    // streak: [], // commented out for now
   });
 
   const fetchLeaderboard = async () => {
     const token = localStorage.getItem("token");
     try {
-      const [day, week, month, streak] = await Promise.all([
+      const [day, week, month /*, streak*/] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/leaderboard/day`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -24,15 +24,15 @@ export default function Leaderboard() {
         axios.get(`${API_BASE_URL}/api/leaderboard/month`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`${API_BASE_URL}/api/leaderboard/streak`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        // axios.get(`${API_BASE_URL}/api/leaderboard/streak`, {
+        //   headers: { Authorization: `Bearer ${token}` },
+        // }),
       ]);
       setLeaderboard({
         day: day.data,
         week: week.data,
         month: month.data,
-        streak: streak.data,
+        // streak: streak.data,
       });
     } catch (err) {
       console.error("Failed to load leaderboard:", err);
@@ -74,12 +74,13 @@ export default function Leaderboard() {
     <div className="p-4 relative">
       <div className="flex justify-center items-center mb-4 relative">
         <h1 className="text-lg font-bold text-center underline">Leaderboard Overview</h1>
-        
       </div>
-      {renderTable("Star of the Day", leaderboard.day)}
-      {renderTable("Star of the Week", leaderboard.week)}
-      {renderTable("Star of the Month", leaderboard.month)}
-      {renderTable("Streak Breakers", leaderboard.streak)}
+
+      {renderTable("Star of the Day", leaderboard.day.slice(0, 1))}
+      {renderTable("Star of the Week", leaderboard.week.slice(0, 3))}
+      {renderTable("Star of the Month", leaderboard.month.slice(0, 3))}
+
+      {/* {renderTable("Streak Breakers", leaderboard.streak)} */}
     </div>
   );
 }
