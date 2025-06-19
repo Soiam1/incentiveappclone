@@ -5,17 +5,18 @@ export default function Sidebar({ activeSection, setActiveSection }) {
 
   const sections = [
     { key: "setup", label: "Setup" },
-    { key: "outlets", label: "Outlets" },
     { key: "pending", label: "Pending Salesmen" },
-    { key: "users", label: "Users" },
-    { key: "upload", label: "Upload Base" },
     { key: "products", label: "Products" },
-    { key: "sales", label: "Sales Upload" },
-    { key: "claims", label: "Claims" },
-    { key: "incentives", label: "Incentives" },
-    { key: "streaks", label: "Streaks" },
-    { key: "leaderboard", label: "Leaderboard" },
     { key: "traits", label: "Traits Config" },
+    { label: "Set Incentives", key: "setincentives" },
+    { key: "users", label: "Users" },
+    { key: "claims", label: "Claims" },
+    { key: "upload", label: "Upload Base" },
+    { key: "sales", label: "Sales Upload" },
+    { key: "incentives", label: "Incentives" },
+    { key: "leaderboard", label: "Leaderboard" },
+    { key: "outlets", label: "Outlets" },
+    { key: "streaks", label: "Streaks" },
   ];
 
   return (

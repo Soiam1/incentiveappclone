@@ -1,9 +1,16 @@
 # backend/api/leaderboard_router.py
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from db.database import SessionLocal
+from sqlalchemy import func
+from db.database import get_db, SessionLocal
+from models.sale import Sale  # ✅ Add this import
+from models.salesman import Salesman
+from datetime import date
+from utils.date_range import get_week_range_and_label, get_month_range
+from pydantic import BaseModel
+
+
 from crud.leaderboard_crud import (
     get_leaderboard,
     calculate_leaderboard,
@@ -40,15 +47,44 @@ def leaderboard_view(
 def leaderboard_day(db: Session = Depends(get_db)):
     return calculate_leaderboard(db, period="day")
 
-
 @router.get("/week")
-def leaderboard_week(db: Session = Depends(get_db)):
-    return calculate_leaderboard(db, period="week")
+def get_week_leaderboard(db: Session = Depends(get_db)):
+    today = date.today()
+    start, end, label = get_week_range_and_label(today)
+
+    results = (
+        db.query(Salesman.name, func.sum(Sale.amount).label("sales"))
+        .join(Salesman, Salesman.id == Sale.salesman_id)
+        .filter(func.date(Sale.timestamp) >= start)
+        .filter(func.date(Sale.timestamp) <= end)
+        .group_by(Salesman.name)
+        .order_by(func.sum(Sale.amount).desc())
+        .all()
+    )
+
+    return {"label": label, "data": [{"name": r.name, "sales": r.sales} for r in results]}
+
+
 
 
 @router.get("/month")
-def leaderboard_month(db: Session = Depends(get_db)):
-    return calculate_leaderboard(db, period="month")
+def get_month_leaderboard(db: Session = Depends(get_db)):
+    today = date.today()
+    start, end, label = get_month_range(today)
+
+    results = (
+        db.query(Salesman.name, func.sum(Sale.amount).label("sales"))
+        .join(Salesman, Salesman.id == Sale.salesman_id)
+        .filter(func.date(Sale.timestamp) >= start)
+        .filter(func.date(Sale.timestamp) <= end)
+        .group_by(Salesman.name)
+        .order_by(func.sum(Sale.amount).desc())
+        .all()
+    )
+
+    return {"label": label, "data": [{"name": r.name, "sales": r.sales} for r in results]}
+
+
 
 
 @router.get("/streak")

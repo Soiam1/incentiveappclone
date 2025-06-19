@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from datetime import date
 from sqlalchemy import func
-from models.incentive import LeaderboardIncentive, Incentive
+from models.incentive import Incentive
+from models.leaderboardincentive import LeaderboardIncentive
 from schemas.incentive_schema import IncentiveOut, IncentiveSchema
 from schemas.claim_schema import ClaimRequest, ClaimOut
 from schemas.incentive_schema import IncentiveSchema
-
+from services.reward_distributor import reward_top_salesman
 from crud.incentive_crud import (
     toggle_incentive_visibility,
     get_incentives_for_salesman,
@@ -179,3 +180,15 @@ def get_incentives(db: Session = Depends(get_db)):
         "week": data.week_amount if data else 0,
         "month": data.month_amount if data else 0
     }
+
+@router.post("/admin/reward/daily")
+def reward_day(db: Session = Depends(get_db)):
+    return {"message": reward_top_salesman(db, "day")}
+
+@router.post("/admin/reward/weekly")
+def reward_week(db: Session = Depends(get_db)):
+    return {"message": reward_top_salesman(db, "week")}
+
+@router.post("/admin/reward/monthly")
+def reward_month(db: Session = Depends(get_db)):
+    return {"message": reward_top_salesman(db, "month")}

@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime
 from datetime import datetime
 from db.database import Base
+
 class LeaderboardIncentive(Base):
     __tablename__ = "leaderboard_incentives"
     id = Column(Integer, primary_key=True, index=True)

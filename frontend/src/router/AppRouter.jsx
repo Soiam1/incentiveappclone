@@ -8,6 +8,7 @@ import HistoryPage from '../pages/salesman/HistoryPage';
 import SalesmanLanding from "../pages/salesman/SalesmanLanding";
 import ProfilePage from "../pages/salesman/ProfilePage";
 import SalesPage from "../pages/salesman/SalesPage";
+import SetIncentivePage from "../pages/admin/SetIncentivePage";
 
 // Role-aware protected route
 function RequireRole({ role, children }) {
@@ -63,6 +64,8 @@ export default function AppRouter() {
           }
         />
         <Route path="/history" element={<RequireAuth><HistoryPage /></RequireAuth>} />
+        <Route path="/admin/set-incentives" element={<RequireAuth role="admin"><SetIncentivePage /></RequireAuth>}
+/>
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
