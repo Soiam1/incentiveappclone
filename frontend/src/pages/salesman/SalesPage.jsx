@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Header from '../../components/ui/Header';
 import api from '../../lib/api';
+import logo from "../../assets/logo.png";
 
 export default function SalesPage() {
   const [items, setItems] = useState([]);
@@ -70,6 +71,7 @@ export default function SalesPage() {
         salesman_id
       });
 
+      alert("Sale submitted!");
       navigate('/salesman');
     } catch (error) {
       alert("Failed to submit sale");
@@ -78,74 +80,98 @@ export default function SalesPage() {
   };
 
   return (
-    <div className="p-4 bg-pink-100 min-h-screen space-y-6">
-      {/* Global Header */}
-      <Header />
-      
-      
-      <div className="mt-4">
-        <Button
+    <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
+          
+          {/* ✅ Full-width Red Header */}
+          <div style={{
+            width: "100vw",
+            background: "#B71C1C",
+            padding: "12px 0",
+            marginLeft: "-8px",
+            marginRight: "-8px",
+            textAlign: "center",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+          }}>
+            <img src={logo} alt="Logo" style={{ height: "40px" }} />
+          </div>
+
+      {/* Back Button */}
+      <div style={{ padding: "20px 20px 0" }}>
+        <button
           onClick={() => navigate(-1)}
-          className="text-sm bg-white text-red-600 border border-red-600 px-4 py-2 rounded-full"
+          style={{
+            backgroundColor: "#fff",
+            border: "1px solid #e60000",
+            color: "#e60000",
+            padding: "8px 16px",
+            borderRadius: "999px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
         >
           ← Back
-        </Button>
+        </button>
       </div>
 
-      {/* Manual Entry */}
-      <Card className="p-4 space-y-3">
-        <h3 className="font-semibold text-center">Enter Barcode Manually</h3>
-        <div className=" w-full flex gap-2 items-center">
+      {/* Barcode Input */}
+      <Card className="p-4 mt-4 mx-4">
+        <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <input
-            placeholder="Enter barcode"
             value={manualBarcode}
+            placeholder="Enter barcode"
             onChange={(e) => setManualBarcode(e.target.value)}
-            className="flex-1"
+            style={{
+              flex: 1,
+              padding: "10px",
+              border: "1px solid #ccc",
+              borderRadius: "8px"
+            }}
           />
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
       </Card>
 
       {/* Scanned Items Table */}
-      <Card className="p-4 overflow-x-auto">
-        <table className="w-full text-sm text-center">
-          <thead className="bg-gray-100">
-            <tr className="text-xs">
-              <th>SNO</th>
-              <th>BARCODE</th>
-              <th>QTY</th>
-              <th>AMOUNT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it, i) => (
-              <tr key={i} className="border-t">
-                <td>{i + 1}</td>
-                <td>{it.barcode}</td>
-                <td>
-                  <Input
-                    type="number"
-                    value={it.qty}
-                    onChange={(e) => updateQty(i, +e.target.value)}
-                    className="w-16 text-center"
-                  />
-                </td>
-                <td>{(it.price * it.qty * (it.traitPercentage / 100)).toFixed(2)}</td>
+      {items.length > 0 && (
+        <Card className="p-4 mt-4 mx-4 overflow-x-auto">
+          <table style={{ width: "100%", fontSize: "14px", textAlign: "center", borderCollapse: "collapse" }}>
+            <thead style={{ backgroundColor: "#f0f0f0" }}>
+              <tr>
+                <th style={{ padding: "10px" }}>SNO</th>
+                <th>BARCODE</th>
+                <th>QTY</th>
+                <th>AMOUNT</th>
               </tr>
-            ))}
-            {items.length > 0 && (
-              <tr className="font-semibold border-t">
-                <td colSpan="3" className="text-right pr-2">TOTAL</td>
-                <td>{total.toFixed(2)}</td>
+            </thead>
+            <tbody>
+              {items.map((it, i) => (
+                <tr key={i} style={{ borderTop: "1px solid #ddd" }}>
+                  <td style={{ padding: "10px" }}>{i + 1}</td>
+                  <td>{it.barcode}</td>
+                  <td>
+                    <Input
+                      type="number"
+                      value={it.qty}
+                      onChange={(e) => updateQty(i, +e.target.value)}
+                      className="w-16 text-center"
+                    />
+                  </td>
+                  <td>₹{(it.price * it.qty * (it.traitPercentage / 100)).toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr style={{ borderTop: "2px solid #000", fontWeight: "bold" }}>
+                <td colSpan={3} style={{ textAlign: "right", paddingRight: "12px" }}>TOTAL</td>
+                <td>₹{total.toFixed(2)}</td>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </Card>
+            </tbody>
+          </table>
+        </Card>
+      )}
 
-      <div className="border-t border-gray-300 my-2" /> 
-      <Card className="p-4 space-y-3">
-        <h3 className="font-bold underline text-center">Customer Info</h3>
+      {/* Customer Info */}
+      <Card className="p-4 mt-4 mx-4 space-y-3">
+        <h3 className="text-center font-bold underline mb-2">Customer Info</h3>
         <Input
           label="Name"
           value={customer.name}
@@ -158,8 +184,8 @@ export default function SalesPage() {
         />
       </Card>
 
-      <h3 className="font-bold underline text-center"></h3>
-      <div className="text-center pb-8">
+      {/* Submit Button */}
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
         <Button
           onClick={submitSale}
           disabled={!items.length || !customer.name || !customer.phone}

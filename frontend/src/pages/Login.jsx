@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import Header from "../components/ui/Header";
 import API_BASE_URL from "../config";
+import logo from "../assets/logo.png";
 
 export default function Login() {
   const [mobile, setMobile] = useState("");
@@ -34,16 +34,46 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-100">
-      <Header />
+    <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
+      
+      {/* ✅ Full-width Red Header */}
+      <div style={{
+        width: "100vw",
+        background: "#B71C1C",
+        padding: "12px 0",
+        marginLeft: "-8px",
+        marginRight: "-8px",
+        textAlign: "center",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+      }}>
+        <img src={logo} alt="Logo" style={{ height: "40px" }} />
+      </div>
 
-      <div className="flex flex-col justify-center items-center px-4 py-10 space-y-6">
+      {/* ✅ Centered Login Form */}
+      <div style={{
+        height: "calc(100vh - 64px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "20px"
+      }}>
         <form
           onSubmit={handleSubmit}
-          className="w-3/4 max-w-md bg-white p-6 rounded-lg shadow space-y-6"
+          style={{
+            background: "white",
+            padding: "32px",
+            borderRadius: "12px",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
+            maxWidth: "400px",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
         >
-          
-          <h2 className="text-xl font-bold text-center">Login</h2>
+          <h2 style={{ textAlign: "center", fontSize: "22px", fontWeight: "bold" }}>
+            Login
+          </h2>
 
           <Input
             label="Phone Number"
@@ -62,22 +92,24 @@ export default function Login() {
             required
           />
 
-          <p className="text-center text-sm">
+          <p style={{ textAlign: "center", fontSize: "14px" }}>
             Don’t have an account?{" "}
             <span
-              className="text-blue-600 cursor-pointer underline"
               onClick={() => navigate("/")}
+              style={{
+                color: "#007bff",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
             >
               Signup here
             </span>
           </p>
-        </form>
 
-        <div className="pt-2">
-          <Button type="submit" onClick={handleSubmit}>
-            Login
-          </Button>
-        </div>
+          <div style={{ textAlign: "center" }}>
+            <Button type="submit">Login</Button>
+          </div>
+        </form>
       </div>
     </div>
   );

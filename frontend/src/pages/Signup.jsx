@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../components/ui/Button";
-import Header from "../components/ui/Header";
 import API_BASE_URL from "../config";
+import logo from "../assets/logo.png";
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -53,16 +53,47 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-100">
-      <Header />
-      <div className="flex flex-col justify-center items-center px-4 py-10">
+    <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
+      
+      {/* ✅ Full-width Red Header */}
+      <div style={{
+        width: "100vw",
+        background: "#B71C1C",
+        padding: "12px 0",
+        marginLeft: "-8px",
+        marginRight: "-8px",
+        textAlign: "center",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+      }}>
+        <img src={logo} alt="Logo" style={{ height: "40px" }} />
+      </div>
+
+      {/* ✅ Signup Form */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "30px 16px",
+        minHeight: "calc(100vh - 60px)",
+        background: "#ffffff"
+      }}>
         <form
           onSubmit={handleSubmit}
-          className="w-3/4 max-w-md bg-white p-6 rounded-lg shadow space-y-10 mb-6"
+          style={{
+            background: "#fff",
+            padding: "32px",
+            borderRadius: "12px",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
+            maxWidth: "420px",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
         >
-          
-          <h2 className="text-xl font-bold text-center">Create Your Account</h2>
-          
+          <h2 style={{ textAlign: "center", fontSize: "22px", fontWeight: "bold" }}>
+            Create Your Account
+          </h2>
 
           {[
             { label: "Full Name", name: "name" },
@@ -70,73 +101,86 @@ export default function Signup() {
             { label: "Password", name: "password", type: "password" },
           ].map(({ label, name, type = "text" }) => (
             <div key={name}>
-              <label className="block text-sm font-medium mb-1">{label}</label>
+              <label style={{ display: "block", fontSize: "14px", marginBottom: "4px" }}>{label}</label>
               <input
                 type={type}
                 name={name}
                 value={formData[name]}
                 onChange={handleChange}
                 required
-                className="w-3/4 border border-gray-300 px-3 py-2 rounded text-sm"
+                style={{
+                  width: "100%",
+                  border: "1px solid #ccc",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  fontSize: "14px"
+                }}
               />
             </div>
           ))}
 
           <div>
-            <label className="block text-sm font-medium mb-1">Select Outlet</label>
+            <label style={{ fontSize: "14px", display: "block", marginBottom: "4px" }}>Select Outlet</label>
             <select
               name="outlet"
               value={formData.outlet}
               onChange={handleChange}
               required
-              className="w-1/4 border border-gray-300 px-3 py-2 rounded text-sm"
+              style={{
+                width: "100%",
+                border: "1px solid #ccc",
+                padding: "10px",
+                borderRadius: "6px",
+                fontSize: "14px"
+              }}
             >
               <option value="">-- Select an outlet --</option>
               {outlets.map((o) => (
-                <option key={o.id} value={o.name}>
-                  {o.name}
-                </option>
+                <option key={o.id} value={o.name}>{o.name}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Select Verticle</label>
+            <label style={{ fontSize: "14px", display: "block", marginBottom: "4px" }}>Select Verticle</label>
             <select
               name="verticle"
               value={formData.verticle}
               onChange={handleChange}
               required
-              className="w-1/4 border border-gray-300 px-3 py-2 rounded text-sm"
+              style={{
+                width: "100%",
+                border: "1px solid #ccc",
+                padding: "10px",
+                borderRadius: "6px",
+                fontSize: "14px"
+              }}
             >
               <option value="">-- Select a verticle --</option>
               {verticles.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
+                <option key={v} value={v}>{v}</option>
               ))}
             </select>
           </div>
 
-         
-        </form>
-        <h2 className="text-xl font-bold text-center"></h2>
-        {/* Submit button moved outside */}
-        <div className="py-30 px-20 w-60 max-w-md center">
-          <button type="submit" full onClick={handleSubmit}>
-            Sign Up
-          </button>
-        </div>
-        <p className="text-center text-sm mt-3">
+          <div style={{ textAlign: "center" }}>
+            <Button type="submit">Sign Up</Button>
+          </div>
+
+          <p style={{ textAlign: "center", fontSize: "14px" }}>
             Already a member?{" "}
             <span
-              className="text-blue-600 cursor-pointer underline"
               onClick={() => navigate("/login")}
+              style={{
+                color: "#007bff",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
             >
               Login here
             </span>
-            </p> 
-          
+          </p>
+        </form>
       </div>
     </div>
   );

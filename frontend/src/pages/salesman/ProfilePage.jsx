@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
 import api from '../../lib/api';
 import { toLocalTime } from "../../utils/formatDate";
 import logo from "../../assets/logo.png";
@@ -48,99 +46,190 @@ export default function ProfilePage() {
     }
   };
 
-  if (!profile || loading) return <p>Loading…</p>;
+  if (!profile || loading) return <p style={{ textAlign: "center", marginTop: "2rem" }}>Loading…</p>;
 
   const last = summary?.history?.[0];
 
   return (
-    <div className="p-4 bg-pink-100 min-h-screen">
-      <div className="app-header p-4">
+    <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
+      
+      {/* ✅ Full-width Red Header */}
+      <div style={{
+        width: "100vw",
+        background: "#B71C1C",
+        padding: "12px 0",
+        marginLeft: "-8px",
+        marginRight: "-8px",
+        textAlign: "center",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+      }}>
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      <div className="mt-6 flex flex-col items-center">
-        <div className="w-24 h-24 rounded-full bg-gray-300 mb-4" />
-        <Card className="p-4 w-full max-w-xs">
+      <div style={{ padding: "20px" }}>
+        
+        {/* Profile Details */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "20px",
+          marginBottom: "30px",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
+        }}>
+          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+            <div style={{ width: "80px", height: "80px", background: "#ccc", borderRadius: "999px", margin: "auto" }} />
+          </div>
           <p><strong>Salesman ID:</strong> {profile.id}</p>
-          <p><strong>Name:</strong>       {profile.name}</p>
-          <p><strong>Outlet:</strong>     {profile.outlet}</p>
-          <p><strong>Verticle:</strong>   {profile.verticle}</p>
-        </Card>
-      </div>
+          <p><strong>Name:</strong> {profile.name}</p>
+          <p><strong>Outlet:</strong> {profile.outlet}</p>
+          <p><strong>Verticle:</strong> {profile.verticle}</p>
+        </div>
 
-      <div className="mt-4">
+        {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="text-sm bg-white text-red-600 border border-red-600 px-2 py-2 rounded-full"
+          style={{
+            background: "#fff",
+            border: "1px solid #e60000",
+            color: "#e60000",
+            padding: "6px 16px",
+            borderRadius: "999px",
+            fontSize: "14px",
+            marginBottom: "20px"
+          }}
         >
           ← Back
         </button>
-      </div>
 
-      <div className="border-t border-gray-300 my-2" />
-      <div className="mt-6 flex flex-col items-center">
-        <Card className="p-4 w-full max-w-xs">
-          <h2 className="text-lg font-bold mb-2 underline">Wallet Summary</h2>
+        {/* Wallet Summary */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "20px",
+          marginBottom: "30px",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
+        }}>
+          <h2 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "16px", textDecoration: "underline" }}>
+            Wallet Summary
+          </h2>
           <p>Total Incentive: ₹{summary.total_incentive.toFixed(2)}</p>
           <p>Total Withdrawn: ₹{summary.total_withdrawn.toFixed(2)}</p>
           <p>Wallet Balance: ₹{summary.wallet_balance.toFixed(2)}</p>
           {summary.pending_claim && (
-            <p className="text-yellow-600 font-semibold">
+            <p style={{ color: "#d97706", fontWeight: "bold" }}>
               Pending Withdrawal: ₹{summary.pending_claim.amount} (⏳ Pending)
             </p>
           )}
 
-          <div className="mt-4 flex gap-2">
-            <Button className="bg-green-600 text-white text-sm px-3 py-1 rounded-full" onClick={handleWithdraw}>
+          <div style={{ marginTop: "16px", display: "flex", gap: "12px" }}>
+            <button
+              onClick={handleWithdraw}
+              style={{
+                backgroundColor: "#FF0004",
+                color: "#fff",
+                border: "none",
+                borderRadius: "999px",
+                padding: "8px 16px",
+                fontWeight: "bold",
+                fontSize: "14px"
+              }}
+            >
               Withdraw Wallet
-            </Button>
-            <Button className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full" onClick={() => setShowHistory(true)}>
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              style={{
+                backgroundColor: "#007bff",
+                color: "#fff",
+                border: "none",
+                borderRadius: "999px",
+                padding: "8px 16px",
+                fontWeight: "bold",
+                fontSize: "14px"
+              }}
+            >
               View History
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {showHistory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded shadow w-[90%] max-w-md">
-            <h3 className="text-lg font-bold mb-4">Last Withdrawal</h3>
-            {!last ? (
-              <p className="text-sm text-gray-500">No withdrawal history yet.</p>
-            ) : (
-              <table className="w-full text-sm border border-gray-300">
-                <thead className="bg-gray-200">
-                  <tr>
-                    <th className="text-left p-2 border-b">Amount</th>
-                    <th className="text-left p-2 border-b">Status</th>
-                    <th className="text-left p-2 border-b">Date</th>
-                    <th className="text-left p-2 border-b">Remarks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b">
-                    <td className="p-2">₹{last.amount}</td>
-                    <td className="p-2">{last.status.toUpperCase()}</td>
-                    <td className="p-2 text-xs text-gray-600">
-                      {toLocalTime(last.timestamp).toLocaleString()}
-                    </td>
-                    <td className="p-2 text-xs text-red-600">{last.remarks || "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-
-            <div className="mt-4 flex justify-between">
-              <Button className="bg-gray-600 text-white" onClick={() => setShowHistory(false)}>
-                Close
-              </Button>
-              <Button className="bg-blue-700 text-white" onClick={() => navigate('/history')}>
-                Show All
-              </Button>
-            </div>
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Withdrawal History Popup */}
+        {showHistory && (
+          <div style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: "#fff",
+              padding: "20px",
+              borderRadius: "12px",
+              maxWidth: "90%",
+              width: "400px",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.25)"
+            }}>
+              <h3 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "12px" }}>Last Withdrawal</h3>
+              {!last ? (
+                <p style={{ color: "#888" }}>No withdrawal history yet.</p>
+              ) : (
+                <table style={{ width: "100%", fontSize: "14px", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#f3f3f3" }}>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Amount</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Status</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Date</th>
+                      <th style={{ textAlign: "left", padding: "8px" }}>Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: "8px" }}>₹{last.amount}</td>
+                      <td style={{ padding: "8px" }}>{last.status.toUpperCase()}</td>
+                      <td style={{ padding: "8px", color: "#555" }}>
+                        {toLocalTime(last.timestamp).toLocaleString()}
+                      </td>
+                      <td style={{ padding: "8px", color: "#e60000" }}>{last.remarks || "-"}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+
+              <div style={{ marginTop: "20px", display: "flex", justifyContent: "space-between" }}>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  style={{
+                    background: "#6c757d",
+                    color: "#fff",
+                    border: "none",
+                    padding: "8px 14px",
+                    borderRadius: "999px",
+                    fontWeight: "bold"
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => navigate('/history')}
+                  style={{
+                    background: "#007bff",
+                    color: "#fff",
+                    border: "none",
+                    padding: "8px 14px",
+                    borderRadius: "999px",
+                    fontWeight: "bold"
+                  }}
+                >
+                  Show All
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

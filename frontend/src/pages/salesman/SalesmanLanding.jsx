@@ -37,7 +37,7 @@ export default function SalesmanLanding() {
         {/* Header */}
         <div style={{
           width: "100%",
-          background: "#e60000",
+          background: "#B71C1C",
           padding: "12px 0",
           textAlign: "center",
           boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
