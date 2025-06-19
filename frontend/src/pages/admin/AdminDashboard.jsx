@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 
-// ✅ Layout components
+// Layout Components
 import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Navbar"; // Ensure this is styled full-width top nav
 import Card from "@/components/ui/Card";
 
-// ✅ Admin modules
+// Pages
 import OutletManager from "./OutletManager";
 import PendingSalesmen from "./PendingSalesmen";
 import UserManager from "./UserManager";
@@ -18,7 +17,8 @@ import Streaks from "./Streaks";
 import Leaderboard from "./Leaderboard";
 import TraitsConfig from "./TraitsConfig";
 import SetupPanel from "./SetupPanel";
-import SetIncentivePage from "./SetIncentivePage"; // ✅ added
+import SetIncentivePage from "./SetIncentivePage";
+import RewardPage from "./RewardPage";
 import logo from "../../assets/logo.png";
 
 const AdminDashboard = () => {
@@ -52,10 +52,12 @@ const AdminDashboard = () => {
       case "setup":
         return <SetupPanel key={refreshKey} />;
       case "setincentives":
-        return <SetIncentivePage key={refreshKey} />; // ✅ new tab
+        return <SetIncentivePage key={refreshKey} />;
+      case "reward":
+        return <RewardPage key={refreshKey} />;
       default:
         return (
-          <div className="text-xl font-semibold">
+          <div style={{ fontSize: "1.25rem", fontWeight: "bold", color: "#444" }}>
             Welcome to Admin Dashboard
           </div>
         );
@@ -63,15 +65,29 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="p-4 bg-pink-100 min-h-screen">
-      <div className="app-header p-4">
+    <div style={{ backgroundColor: "#fce4ec", minHeight: "100vh", fontFamily: "Segoe UI, sans-serif" }}>
+      
+      {/* 3D Header */}
+      <div style={{
+        width: "100%",
+        background: "#ffffff",
+        padding: "18px 0",
+        textAlign: "center",
+        boxShadow: "0 6px 20px rgba(0,0,0,0.15)"
+      }}>
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Body: Sidebar + Main */}
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display: "flex", height: "calc(100vh - 80px)", overflow: "hidden" }}>
+        
         {/* Sidebar */}
-        <div className="bg-white shadow-md w-60 shrink-0 overflow-y-auto">
+        <div style={{
+          backgroundColor: "#b71c1c",
+          color: "#fff",
+          width: "240px",
+          padding: "16px 0",
+          boxShadow: "4px 0 12px rgba(0,0,0,0.1)"
+        }}>
           <Sidebar
             activeSection={activeSection}
             setActiveSection={setActiveSection}
@@ -79,9 +95,31 @@ const AdminDashboard = () => {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="w-full max-w-6xl mx-auto">
-            <Card title={activeSection.toUpperCase()}>{renderSection()}</Card>
+        <main style={{
+          flexGrow: 1,
+          padding: "32px",
+          overflowY: "auto",
+          background: "#fef1f4"
+        }}>
+          <div style={{
+            maxWidth: "1000px",
+            margin: "0 auto",
+            background: "#fff",
+            borderRadius: "16px",
+            padding: "24px",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
+          }}>
+            <h1 style={{
+              fontSize: "20px",
+              fontWeight: "bold",
+              marginBottom: "20px",
+              color: "#c62828",
+              borderBottom: "2px solid #f8bbd0",
+              paddingBottom: "8px"
+            }}>
+              {activeSection.toUpperCase()}
+            </h1>
+            {renderSection()}
           </div>
         </main>
       </div>

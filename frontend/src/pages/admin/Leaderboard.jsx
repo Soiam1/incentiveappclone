@@ -28,7 +28,7 @@ export default function Leaderboard() {
           }),
         ]);
         setLeaderboard({
-          day: { data: day.data.data || [], label: day.data.label || "" },
+          day: { data: day.data || [], label: "" },
           week: { data: week.data.data || [], label: week.data.label || "" },
           month: { data: month.data.data || [], label: month.data.label || "" },
         });

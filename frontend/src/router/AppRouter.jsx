@@ -4,6 +4,7 @@ import Signup from "../pages/Signup";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import RequireAuth from "../auth/requireAuth";
 import HistoryPage from '../pages/salesman/HistoryPage';
+import RewardPage from "../pages/admin/RewardPage";
 // Salesman screens
 import SalesmanLanding from "../pages/salesman/SalesmanLanding";
 import ProfilePage from "../pages/salesman/ProfilePage";
@@ -63,8 +64,10 @@ export default function AppRouter() {
             </RequireRole>
           }
         />
+        <Route path="/admin/reward" element={<RequireAuth role="admin"><RewardPage /></RequireAuth>} />
         <Route path="/history" element={<RequireAuth><HistoryPage /></RequireAuth>} />
         <Route path="/admin/set-incentives" element={<RequireAuth role="admin"><SetIncentivePage /></RequireAuth>}
+        
 />
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
