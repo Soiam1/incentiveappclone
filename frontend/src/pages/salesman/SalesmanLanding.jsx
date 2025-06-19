@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import RedBackground from '../../components/ui/RedBackground';
-import Header from '../../components/ui/Header';
 import api from '../../lib/api';
-import Leaderboard from '../admin/Leaderboard';
+import logo from "../../assets/logo.png";
 import { ScanBarcode } from 'lucide-react';
+import Leaderboard from '../admin/Leaderboard';
 
 export default function SalesmanLanding() {
   const [stats, setStats] = useState(null);
@@ -22,50 +19,110 @@ export default function SalesmanLanding() {
       .catch(console.error);
   }, []);
 
-  if (!stats) return <p className="text-center mt-10 text-gray-700">Loading…</p>;
+  if (!stats) {
+    return <p style={{ textAlign: "center", marginTop: "2rem", color: "#555" }}>Loading…</p>;
+  }
 
   return (
-    <RedBackground className="min-h-screen bg-pink-100 px-4 py-6 space-y-6">
-      <Header />
+    <div style={{ minHeight: "100vh", fontFamily: "'Segoe UI', sans-serif" }}>
+      {/* ✅ Fixed Top Container */}
+      <div style={{
+        position: "sticky",
+        top: 0,
+        background: "#ffffff",
+        zIndex: 1000,
+        paddingBottom: "16px",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.05)"
+      }}>
+        {/* Header */}
+        <div style={{
+          width: "100%",
+          background: "#e60000",
+          padding: "12px 0",
+          textAlign: "center",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+        }}>
+          <img src={logo} alt="Logo" style={{ height: "40px" }} />
+        </div>
 
-      {/* Summary and Profile button inside a single Card */}
-      <Card className="px-6 py-4 space-y-3 text-sm text-gray-800">
-        <div>
-          <p>Month Sales: <span className="font-semibold text-red-600">₹{(stats.month_sales_amount ?? 0).toFixed(2)}</span></p>
-          <p>Today's Sales: <span className="font-semibold">₹{(stats.today_sales_amount ?? 0).toFixed(2)}</span></p>
-          <p>Today's Incentive: <span className="font-semibold text-green-600">₹{(stats.today_incentive ?? 0).toFixed(2)}</span></p>
-          <p>Wallet Balance: <span className="font-semibold text-blue-600">₹{(stats.wallet_balance ?? 0).toFixed(2)}</span></p>
+        {/* Stats Summary */}
+        <div style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "24px",
+          margin: "20px",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.15)"
+        }}>
+          <div style={{ fontSize: "15px", color: "#333", marginBottom: "16px" }}>
+            <p>Month Sales: <span style={{ color: "#000000", fontWeight: "bold" }}>₹{(stats.month_sales_amount ?? 0).toFixed(2)}</span></p>
+            <p>Today's Sales: <span style={{ fontWeight: "bold" }}>₹{(stats.today_sales_amount ?? 0).toFixed(2)}</span></p>
+            <p>Today's Incentive: <span style={{ color: "#28a745", fontWeight: "bold" }}>₹{(stats.today_incentive ?? 0).toFixed(2)}</span></p>
+            <p>Wallet Balance: <span style={{ color: "#007bff", fontWeight: "bold" }}>₹{(stats.wallet_balance ?? 0).toFixed(2)}</span></p>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <button
+              onClick={() => navigate('/salesman/profile')}
+              style={{
+                background: "#e60000",
+                color: "white",
+                padding: "10px 20px",
+                borderRadius: "999px",
+                border: "none",
+                fontWeight: "bold",
+                cursor: "pointer",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+              }}
+            >
+              PROFILE
+            </button>
+          </div>
         </div>
-        
-        <div className="flex justify-end pt-2">
-          <Button
-            onClick={() => navigate('/salesman/profile')}
-            className="text-white bg-red-600 px-4 py-2 rounded-full center text-sm"
+
+        {/* New Sale Button */}
+        <div style={{
+          textAlign: "center",
+          margin: "0 20px 10px 20px"
+        }}>
+          <button
+            onClick={() => navigate('/salesman/sales')}
+            style={{
+              backgroundColor: "#e60000",
+              color: "#fff",
+              padding: "14px 24px",
+              fontSize: "16px",
+              borderRadius: "999px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              gap: "10px",
+              boxShadow: "0 6px 14px rgba(0,0,0,0.3)",
+              border: "none",
+              cursor: "pointer"
+            }}
           >
-            PROFILE
-            
-          </Button>
+            <ScanBarcode size={18} />
+            <span>New Sale</span>
+          </button>
         </div>
-      </Card>
-      <h2 className="text-xl font-bold text-center mb-2"></h2>
-       <div className="border-t border-gray-300 my-2" /> 
-      <div>
-        
-        <button
-          onClick={() => navigate('/salesman/sales')}
-          className="w-full bg-red-600 text-white py-3  px-10 rounded-full center flex items-center justify-center gap-3 text-base"
-        >
-          <ScanBarcode className="w-5 h-5" />
-          <span>New Sale</span>
-        </button>
-        <div className="border-t border-gray-300 my-2" />
       </div>
-      
-      {/* Leaderboard Section */}
-      <Card className="bg-white px-4 py-5">
-        
-        <Leaderboard data={stats.leaderboard || []} />
-      </Card>
-    </RedBackground>
+
+      {/* ✅ Scrollable Leaderboard Section */}
+      <div style={{
+        padding: "20px",
+        overflowY: "auto",
+        maxHeight: "calc(100vh - 460px)"
+      }}>
+        <div style={{
+          backgroundColor: "#fff",
+          padding: "20px",
+          borderRadius: "16px",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.15)"
+        }}>
+          <Leaderboard data={stats.leaderboard || []} />
+        </div>
+      </div>
+    </div>
   );
 }

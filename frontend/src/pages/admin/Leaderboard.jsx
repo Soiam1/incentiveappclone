@@ -119,7 +119,7 @@ export default function Leaderboard() {
           }}
         >
           <thead>
-            <tr style={{ background: "#f8f8f8", borderBottom: "2px solid #ddd" }}>
+            <tr style={{ background: "#fffff", borderBottom: "2px solid #ddd" }}>
               <th style={{ padding: "10px" }}>Name</th>
               <th style={{ padding: "10px" }}>Sales Amount</th>
             </tr>
@@ -141,7 +141,7 @@ export default function Leaderboard() {
     <div
       style={{
         padding: "30px",
-        backgroundColor: "#f0f0f5",
+        backgroundColor: "#fffff",
         minHeight: "100vh",
         fontFamily: "'Segoe UI', sans-serif",
       }}
