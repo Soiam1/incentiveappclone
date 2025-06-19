@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
-from models.actual_sale import ActualSale
+from models.sale import Sale  # ✅ changed from actual_sale
 from models.salesman import Salesman
 from models.incentive import Incentive
 from models.leaderboardincentive import LeaderboardIncentive
@@ -24,20 +24,20 @@ def reward_top_salesman(db: Session, period: str):
 
     # Time filter
     if period == "day":
-        sales_filter = func.date(ActualSale.timestamp) == today
+        sales_filter = func.date(Sale.timestamp) == today
     elif period == "week":
-        sales_filter = extract("week", ActualSale.timestamp) == extract("week", func.now())
+        sales_filter = extract("week", Sale.timestamp) == extract("week", func.now())
     elif period == "month":
-        sales_filter = extract("month", ActualSale.timestamp) == extract("month", func.now())
+        sales_filter = extract("month", Sale.timestamp) == extract("month", func.now())
     else:
         return "Invalid period"
 
     # Get top salesman
     top = (
-        db.query(ActualSale.salesman_id, func.sum(ActualSale.amount).label("total"))
+        db.query(Sale.salesman_id, func.sum(Sale.amount).label("total"))
         .filter(sales_filter)
-        .group_by(ActualSale.salesman_id)
-        .order_by(func.sum(ActualSale.amount).desc())
+        .group_by(Sale.salesman_id)
+        .order_by(func.sum(Sale.amount).desc())
         .first()
     )
 

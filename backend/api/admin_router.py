@@ -10,7 +10,7 @@ from models.admin import Admin
 from crud.system_crud import get_status, mark_setup_complete
 from schemas.system_schema import SetupStatusOut
 from config import settings
-
+from services.reward_distributor import reward_top_salesman
 from utils.security import (
     get_current_user_role,
     hash_password,
@@ -92,3 +92,15 @@ def check_setup_status(db: Session = Depends(get_db)):
 def complete_setup(db: Session = Depends(get_db)):
     state = mark_setup_complete(db)
     return {"message": "Setup marked complete", "setup_complete": state.setup_complete}
+
+class RewardRequest(BaseModel):
+    period: str
+
+@router.post("/reward")
+def trigger_leaderboard_reward(payload: RewardRequest, db: Session = Depends(get_db)):
+    period = payload.period.lower()
+    if period not in ["day", "week", "month"]:
+        raise HTTPException(status_code=400, detail="Invalid period. Use 'day', 'week' or 'month'.")
+
+    result = reward_top_salesman(db, period)
+    return {"message": result}

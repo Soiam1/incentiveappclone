@@ -13,3 +13,5 @@ class Incentive(Base):
     trait = Column(String)
     is_visible = Column(Boolean, default=True)  # if hidden by admin, don't show
     timestamp = Column(DateTime, default=datetime.utcnow)
+    type = Column(String, nullable=True)
+    source = Column(String, nullable=True)
