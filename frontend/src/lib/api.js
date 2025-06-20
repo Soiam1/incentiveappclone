@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://details-chargers-confidential-relates.trycloudflare.com",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://front-handling-eleven-hurt.trycloudflare.com",
   timeout: 10000,
 });
 
