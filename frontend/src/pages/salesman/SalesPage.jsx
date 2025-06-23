@@ -31,43 +31,72 @@ export default function SalesPage() {
   }, [navigate]);
 
   useEffect(() => {
-    const html5QrCode = new Html5Qrcode("reader", {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-      ]
-    });
+    let html5QrCode;
+    let videoTrack;
 
-    Html5Qrcode.getCameras().then((devices) => {
-      if (!devices || devices.length === 0) return;
-      const rear = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+    async function startScanner() {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (!devices.length) throw new Error("No camera found");
 
-      html5QrCode
-        .start(
-          { deviceId: { exact: rear.id } },
+        const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+        const constraints = {
+          video: {
+            deviceId: rearCam.id,
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            advanced: [{ zoom: 2.5 }]
+          }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoTrack = stream.getVideoTracks()[0];
+
+        const capabilities = videoTrack.getCapabilities();
+        if (capabilities.zoom) {
+          const zoom = Math.min(capabilities.zoom.max, 2.5);
+          await videoTrack.applyConstraints({ advanced: [{ zoom }] });
+          console.log(`✅ Zoom set to ${zoom}`);
+        } else {
+          console.log("❌ Zoom not supported by this camera.");
+        }
+
+        html5QrCode = new Html5Qrcode("reader", {
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+          ]
+        });
+
+        await html5QrCode.start(
+          { deviceId: { exact: rearCam.id } },
           {
             fps: 10,
             qrbox: { width: 250, height: 100 },
-            videoConstraints: { facingMode: { ideal: "environment" } }
+            videoConstraints: {
+              deviceId: rearCam.id
+            }
           },
           async (decodedText) => {
             beepRef.current?.play();
             await handleManualEntry(decodedText);
-            await new Promise(res => setTimeout(res, 1000)); // avoid multiple scans
+            await new Promise(res => setTimeout(res, 1000));
           },
-          (error) => {
-            // silent scan error
-          }
-        )
-        .catch(err => {
-          console.error("Camera error", err);
-        });
+          (error) => { /* Silent errors */ }
+        );
 
-      scannerRef.current = html5QrCode;
-    });
+        scannerRef.current = html5QrCode;
+      } catch (err) {
+        console.error("Camera init failed:", err);
+        toast.error("Camera access failed. Try HTTPS or allow permissions.");
+      }
+    }
+
+    startScanner();
 
     return () => {
       if (scannerRef.current) {
@@ -75,6 +104,7 @@ export default function SalesPage() {
           scannerRef.current.clear();
         });
       }
+      if (videoTrack) videoTrack.stop();
     };
   }, []);
 
@@ -159,7 +189,7 @@ export default function SalesPage() {
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Barcode Input */}
+      {/* Barcode Entry + Camera Scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -177,7 +207,6 @@ export default function SalesPage() {
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
 
-        {/* Scanner Box */}
         <div id="reader" style={{
           width: "100%",
           marginTop: "16px",
