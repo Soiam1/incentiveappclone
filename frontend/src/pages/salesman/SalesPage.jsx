@@ -18,9 +18,8 @@ export default function SalesPage() {
   const scannerRef = useRef(null);
   const beepRef = useRef(null);
   const navigate = useNavigate();
-
-  let lastScanned = useRef("");
-  let lastScannedAt = useRef(0);
+  const lastScanned = useRef("");
+  const lastScannedAt = useRef(0);
 
   useEffect(() => {
     try {
@@ -41,7 +40,6 @@ export default function SalesPage() {
       try {
         const devices = await Html5Qrcode.getCameras();
         if (!devices.length) throw new Error("No camera found");
-
         const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
 
         const constraints = {
@@ -49,8 +47,7 @@ export default function SalesPage() {
             deviceId: rearCam.id,
             facingMode: { ideal: "environment" },
             width: { ideal: 200 },
-            height: { ideal: 50 },
-            advanced: [{ zoom: 2.5 }]
+            height: { ideal: 50 }
           }
         };
 
@@ -61,7 +58,6 @@ export default function SalesPage() {
         if (capabilities.zoom) {
           const zoom = Math.min(capabilities.zoom.max, 3);
           await videoTrack.applyConstraints({ advanced: [{ zoom }] });
-          console.log(`✅ Zoom set to ${zoom}`);
         }
 
         html5QrCode = new Html5Qrcode("reader", {
@@ -79,24 +75,19 @@ export default function SalesPage() {
           {
             fps: 10,
             qrbox: { width: 300, height: 50 },
-            videoConstraints: {
-              deviceId: rearCam.id
-            }
+            videoConstraints: { deviceId: rearCam.id }
           },
           async (decodedText) => {
             const now = Date.now();
             if (decodedText === lastScanned.current && now - lastScannedAt.current < 2000) return;
-
             lastScanned.current = decodedText;
             lastScannedAt.current = now;
-
             try {
               await beepRef.current?.play();
             } catch (e) {}
-
             await handleManualEntry(decodedText);
           },
-          (error) => { /* silent */ }
+          () => {}
         );
 
         scannerRef.current = html5QrCode;
@@ -110,15 +101,12 @@ export default function SalesPage() {
 
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().then(() => {
-          scannerRef.current.clear();
-        });
+        scannerRef.current.stop().then(() => scannerRef.current.clear());
       }
       if (videoTrack) videoTrack.stop();
     };
   }, []);
 
-  // 🔊 Unlock beep sound on any touch/click
   useEffect(() => {
     const unlockAudio = () => {
       beepRef.current?.play().catch(() => {});
@@ -195,6 +183,16 @@ export default function SalesPage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
       <ToastContainer position="top-center" />
+      <style>
+        {`
+          #reader video {
+            width: 100% !important;
+            max-height: 120px !important;
+            object-fit: cover;
+            border-radius: 8px;
+          }
+        `}
+      </style>
       <audio ref={beepRef} src={beepSound} preload="auto" />
 
       {/* Header */}
@@ -227,7 +225,6 @@ export default function SalesPage() {
           />
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
-
         <div id="reader" style={{
           width: "100%",
           marginTop: "16px",
