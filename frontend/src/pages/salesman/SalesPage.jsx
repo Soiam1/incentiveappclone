@@ -15,12 +15,12 @@ export default function SalesPage() {
   const [items, setItems] = useState([]);
   const [customer, setCustomer] = useState({ name: '', phone: '' });
   const [manualBarcode, setManualBarcode] = useState('');
+  const [isTorchOn, setIsTorchOn] = useState(false);
+
   const scannerRef = useRef(null);
   const beepRef = useRef(null);
+  const videoTrackRef = useRef(null);
   const navigate = useNavigate();
-
-  let lastScanned = useRef("");
-  let lastScannedAt = useRef(0);
 
   useEffect(() => {
     try {
@@ -35,33 +35,14 @@ export default function SalesPage() {
 
   useEffect(() => {
     let html5QrCode;
-    let videoTrack;
+    const lastScanned = { code: "", time: 0 };
 
-    const startScanner = async () => {
+    async function startScanner() {
       try {
         const devices = await Html5Qrcode.getCameras();
         if (!devices.length) throw new Error("No camera found");
 
         const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
-
-        const constraints = {
-          video: {
-            deviceId: rearCam.id,
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            advanced: [{ zoom: 2.5 }]
-          }
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        videoTrack = stream.getVideoTracks()[0];
-
-        const capabilities = videoTrack.getCapabilities();
-        if (capabilities.zoom) {
-          const zoom = Math.min(capabilities.zoom.max, 2.5);
-          await videoTrack.applyConstraints({ advanced: [{ zoom }] });
-        }
 
         html5QrCode = new Html5Qrcode("reader", {
           formatsToSupport: [
@@ -77,47 +58,51 @@ export default function SalesPage() {
           { deviceId: { exact: rearCam.id } },
           {
             fps: 10,
-            qrbox: { width: 250, height: 75 },
+            qrbox: { width: 300, height: 100 },
             videoConstraints: {
-              deviceId: rearCam.id
+              deviceId: rearCam.id,
+              facingMode: { ideal: "environment" }
             }
           },
           async (decodedText) => {
             const now = Date.now();
-            if (decodedText === lastScanned.current && now - lastScannedAt.current < 2000) return;
+            if (decodedText === lastScanned.code && now - lastScanned.time < 2000) return;
 
-            lastScanned.current = decodedText;
-            lastScannedAt.current = now;
+            lastScanned.code = decodedText;
+            lastScanned.time = now;
 
-            try {
-              await beepRef.current?.play();
-            } catch (e) {}
-
+            beepRef.current?.play();
             await handleManualEntry(decodedText);
           },
-          (error) => {}
+          (error) => { /* silent */ }
         );
 
         scannerRef.current = html5QrCode;
+
+        // save track for torch
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { deviceId: rearCam.id }
+        });
+        videoTrackRef.current = stream.getVideoTracks()[0];
+
       } catch (err) {
         console.error("Camera init failed:", err);
         toast.error("Camera access failed. Try HTTPS or allow permissions.");
       }
-    };
+    }
 
     startScanner();
 
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().then(() => {
-          scannerRef.current.clear();
-        });
+        scannerRef.current.stop().then(() => scannerRef.current.clear());
       }
-      if (videoTrack) videoTrack.stop();
+      if (videoTrackRef.current) {
+        videoTrackRef.current.stop();
+      }
     };
   }, []);
 
-  // 🔊 Unlock beep sound on any touch/click
   useEffect(() => {
     const unlockAudio = () => {
       beepRef.current?.play().catch(() => {});
@@ -127,6 +112,24 @@ export default function SalesPage() {
     document.addEventListener("click", unlockAudio);
     document.addEventListener("touchstart", unlockAudio);
   }, []);
+
+  const toggleTorch = async () => {
+    const track = videoTrackRef.current;
+    if (!track) return;
+    const capabilities = track.getCapabilities();
+    if (capabilities.torch) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ torch: !isTorchOn }]
+        });
+        setIsTorchOn(prev => !prev);
+      } catch (err) {
+        toast.error("Torch not supported.");
+      }
+    } else {
+      toast.error("Torch not available on this device.");
+    }
+  };
 
   const handleManualEntry = async (code) => {
     if (!code) return;
@@ -228,15 +231,37 @@ export default function SalesPage() {
             <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
           </div>
 
-          <div id="reader" style={{
-            width: "100%",
-            maxWidth: "320px",
-            height: "140px",
-            margin: "0 auto",
-            border: "1px solid #ccc",
-            borderRadius: "10px",
-            overflow: "hidden"
-          }} />
+          {/* Scanner Box + Frame */}
+          <div style={{ position: "relative", marginTop: "16px", marginBottom: "10px" }}>
+            <div id="reader" style={{
+              width: "100%",
+              maxWidth: "480px",
+              height: "240px",
+              margin: "0 auto",
+              border: "1px solid #ccc",
+              borderRadius: "10px",
+              overflow: "hidden"
+            }} />
+
+            <div style={{
+              position: "absolute",
+              top: "16px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "300px",
+              height: "100px",
+              border: "2px solid #ffffff",
+              borderRadius: "4px",
+              boxShadow: "0 0 8px rgba(255,255,255,0.8)"
+            }} />
+          </div>
+
+          {/* Torch Toggle */}
+          <div style={{ textAlign: "center" }}>
+            <Button onClick={toggleTorch}>
+              {isTorchOn ? "Turn Off Flash" : "Turn On Flash"}
+            </Button>
+          </div>
         </div>
       </Card>
 
