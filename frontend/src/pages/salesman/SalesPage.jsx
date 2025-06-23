@@ -1,3 +1,4 @@
+// same imports
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -82,9 +83,8 @@ export default function SalesPage() {
             if (decodedText === lastScanned.current && now - lastScannedAt.current < 2000) return;
             lastScanned.current = decodedText;
             lastScannedAt.current = now;
-            try {
-              await beepRef.current?.play();
-            } catch (e) {}
+            try { await beepRef.current?.play(); } catch {}
+            toast.success(`Scanned: ${decodedText}`);
             await handleManualEntry(decodedText);
           },
           () => {}
@@ -100,9 +100,7 @@ export default function SalesPage() {
     startScanner();
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().then(() => scannerRef.current.clear());
-      }
+      if (scannerRef.current) scannerRef.current.stop().then(() => scannerRef.current.clear());
       if (videoTrack) videoTrack.stop();
     };
   }, []);
@@ -151,14 +149,8 @@ export default function SalesPage() {
   );
 
   const submitSale = async () => {
-    if (!items.length) {
-      toast.warn("Please add a barcode first.");
-      return;
-    }
-    if (!customer.name || !customer.phone) {
-      toast.warn("Please fill in customer details.");
-      return;
-    }
+    if (!items.length) return toast.warn("Please add a barcode first.");
+    if (!customer.name || !customer.phone) return toast.warn("Please fill in customer details.");
 
     try {
       const raw = localStorage.getItem("token");
@@ -208,7 +200,19 @@ export default function SalesPage() {
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Barcode Input + Scanner */}
+      {/* Scanner */}
+      <Card className="p-4 mt-4 mx-4">
+        <h3 className="text-center font-semibold mb-2">Scan Barcode</h3>
+        <div id="reader" style={{
+          width: "100%",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          overflow: "hidden",
+          minHeight: "100px"
+        }} />
+      </Card>
+
+      {/* Manual Barcode Input - moved BELOW scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -225,14 +229,6 @@ export default function SalesPage() {
           />
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
-        <div id="reader" style={{
-          width: "100%",
-          marginTop: "16px",
-          border: "1px solid #ccc",
-          borderRadius: "10px",
-          overflow: "hidden",
-          minHeight: "100px"
-        }} />
       </Card>
 
       {/* Scanned Items Table */}
