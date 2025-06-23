@@ -78,7 +78,7 @@ export default function SalesPage() {
           { deviceId: { exact: rearCam.id } },
           {
             fps: 10,
-            qrbox: { width: 200, height: 50 },
+            qrbox: { width: 300, height: 50 },
             videoConstraints: {
               deviceId: rearCam.id
             }
