@@ -48,8 +48,8 @@ export default function SalesPage() {
           video: {
             deviceId: rearCam.id,
             facingMode: { ideal: "environment" },
-            width: { ideal: 250 },
-            height: { ideal: 100 },
+            width: { ideal: 200 },
+            height: { ideal: 50 },
             advanced: [{ zoom: 2.5 }]
           }
         };
@@ -78,7 +78,7 @@ export default function SalesPage() {
           { deviceId: { exact: rearCam.id } },
           {
             fps: 10,
-            qrbox: { width: 250, height: 75 },
+            qrbox: { width: 200, height: 50 },
             videoConstraints: {
               deviceId: rearCam.id
             }
