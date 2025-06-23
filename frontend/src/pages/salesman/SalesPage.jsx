@@ -19,6 +19,9 @@ export default function SalesPage() {
   const beepRef = useRef(null);
   const navigate = useNavigate();
 
+  let lastScanned = useRef("");
+  let lastScannedAt = useRef(0);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("token");
@@ -34,12 +37,13 @@ export default function SalesPage() {
     let html5QrCode;
     let videoTrack;
 
-    async function startScanner() {
+    const startScanner = async () => {
       try {
         const devices = await Html5Qrcode.getCameras();
         if (!devices.length) throw new Error("No camera found");
 
         const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+
         const constraints = {
           video: {
             deviceId: rearCam.id,
@@ -58,8 +62,6 @@ export default function SalesPage() {
           const zoom = Math.min(capabilities.zoom.max, 2.5);
           await videoTrack.applyConstraints({ advanced: [{ zoom }] });
           console.log(`✅ Zoom set to ${zoom}`);
-        } else {
-          console.log("❌ Zoom not supported by this camera.");
         }
 
         html5QrCode = new Html5Qrcode("reader", {
@@ -76,17 +78,25 @@ export default function SalesPage() {
           { deviceId: { exact: rearCam.id } },
           {
             fps: 10,
-            qrbox: { width: 250, height: 100 },
+            qrbox: { width: 250, height: 75 },
             videoConstraints: {
               deviceId: rearCam.id
             }
           },
           async (decodedText) => {
-            beepRef.current?.play();
+            const now = Date.now();
+            if (decodedText === lastScanned.current && now - lastScannedAt.current < 2000) return;
+
+            lastScanned.current = decodedText;
+            lastScannedAt.current = now;
+
+            try {
+              await beepRef.current?.play();
+            } catch (e) {}
+
             await handleManualEntry(decodedText);
-            await new Promise(res => setTimeout(res, 1000));
           },
-          (error) => { /* Silent errors */ }
+          (error) => { /* silent */ }
         );
 
         scannerRef.current = html5QrCode;
@@ -94,7 +104,7 @@ export default function SalesPage() {
         console.error("Camera init failed:", err);
         toast.error("Camera access failed. Try HTTPS or allow permissions.");
       }
-    }
+    };
 
     startScanner();
 
@@ -106,6 +116,17 @@ export default function SalesPage() {
       }
       if (videoTrack) videoTrack.stop();
     };
+  }, []);
+
+  // 🔊 Unlock beep sound on any touch/click
+  useEffect(() => {
+    const unlockAudio = () => {
+      beepRef.current?.play().catch(() => {});
+      document.removeEventListener("click", unlockAudio);
+      document.removeEventListener("touchstart", unlockAudio);
+    };
+    document.addEventListener("click", unlockAudio);
+    document.addEventListener("touchstart", unlockAudio);
   }, []);
 
   const handleManualEntry = async (code) => {
@@ -189,7 +210,7 @@ export default function SalesPage() {
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Barcode Entry + Camera Scanner */}
+      {/* Barcode Input + Scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -213,7 +234,7 @@ export default function SalesPage() {
           border: "1px solid #ccc",
           borderRadius: "10px",
           overflow: "hidden",
-          minHeight: "180px"
+          minHeight: "100px"
         }} />
       </Card>
 
