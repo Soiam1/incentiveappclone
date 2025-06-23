@@ -19,6 +19,9 @@ export default function SalesPage() {
   const beepRef = useRef(null);
   const navigate = useNavigate();
 
+  let lastScanned = useRef("");
+  let lastScannedAt = useRef(0);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("token");
@@ -31,59 +34,91 @@ export default function SalesPage() {
   }, [navigate]);
 
   useEffect(() => {
-    const html5QrCode = new Html5Qrcode("reader", {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E
-      ]
-    });
+    let html5QrCode;
+    let videoTrack;
 
-    Html5Qrcode.getCameras().then(devices => {
-      if (!devices.length) {
-        toast.error("No camera found");
-        return;
-      }
+    const startScanner = async () => {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (!devices.length) throw new Error("No camera found");
 
-      const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+        const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
 
-      html5QrCode.start(
-        { deviceId: { exact: rearCam.id } },
-        {
-          fps: 10,
-          qrbox: { width: 300, height: 100 },
-          videoConstraints: {
-            deviceId: rearCam.id
+        const constraints = {
+          video: {
+            deviceId: rearCam.id,
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            advanced: [{ zoom: 2.5 }]
           }
-        },
-        async (decodedText) => {
-          if (scannerRef.current?.lastCode === decodedText &&
-              Date.now() - scannerRef.current?.lastTime < 2000) return;
+        };
 
-          scannerRef.current.lastCode = decodedText;
-          scannerRef.current.lastTime = Date.now();
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoTrack = stream.getVideoTracks()[0];
 
-          beepRef.current?.play();
-          await handleManualEntry(decodedText);
+        const capabilities = videoTrack.getCapabilities();
+        if (capabilities.zoom) {
+          const zoom = Math.min(capabilities.zoom.max, 2.5);
+          await videoTrack.applyConstraints({ advanced: [{ zoom }] });
+          console.log(`✅ Zoom set to ${zoom}`);
+        }
 
-          await html5QrCode.pause(true);
-          setTimeout(() => html5QrCode.resume(), 2000);
-        },
-        (err) => {}
-      );
+        html5QrCode = new Html5Qrcode("reader", {
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+          ]
+        });
 
-      scannerRef.current = html5QrCode;
-    });
+        await html5QrCode.start(
+          { deviceId: { exact: rearCam.id } },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 75 },
+            videoConstraints: {
+              deviceId: rearCam.id
+            }
+          },
+          async (decodedText) => {
+            const now = Date.now();
+            if (decodedText === lastScanned.current && now - lastScannedAt.current < 2000) return;
+
+            lastScanned.current = decodedText;
+            lastScannedAt.current = now;
+
+            try {
+              await beepRef.current?.play();
+            } catch (e) {}
+
+            await handleManualEntry(decodedText);
+          },
+          (error) => { /* silent */ }
+        );
+
+        scannerRef.current = html5QrCode;
+      } catch (err) {
+        console.error("Camera init failed:", err);
+        toast.error("Camera access failed. Try HTTPS or allow permissions.");
+      }
+    };
+
+    startScanner();
 
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().then(() => scannerRef.current.clear());
+        scannerRef.current.stop().then(() => {
+          scannerRef.current.clear();
+        });
       }
+      if (videoTrack) videoTrack.stop();
     };
   }, []);
 
+  // 🔊 Unlock beep sound on any touch/click
   useEffect(() => {
     const unlockAudio = () => {
       beepRef.current?.play().catch(() => {});
@@ -175,7 +210,7 @@ export default function SalesPage() {
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Manual Entry + Scanner */}
+      {/* Barcode Input + Scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -193,19 +228,17 @@ export default function SalesPage() {
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
 
-        {/* Scanner */}
         <div id="reader" style={{
           width: "100%",
-          maxWidth: "480px",
-          height: "240px",
-          marginTop: "20px",
+          marginTop: "16px",
           border: "1px solid #ccc",
           borderRadius: "10px",
-          overflow: "hidden"
+          overflow: "hidden",
+          minHeight: "100px"
         }} />
       </Card>
 
-      {/* Items Table */}
+      {/* Scanned Items Table */}
       {items.length > 0 && (
         <Card className="p-4 mt-4 mx-4 overflow-x-auto">
           <table style={{ width: "100%", fontSize: "14px", textAlign: "center", borderCollapse: "collapse" }}>
@@ -223,17 +256,11 @@ export default function SalesPage() {
                   <td style={{ padding: "10px" }}>{i + 1}</td>
                   <td>{it.barcode}</td>
                   <td>
-                    <input
+                    <Input
                       type="number"
                       value={it.qty}
                       onChange={(e) => updateQty(i, +e.target.value)}
-                      style={{
-                        width: "60px",
-                        textAlign: "center",
-                        padding: "6px",
-                        border: "1px solid #ccc",
-                        borderRadius: "6px"
-                      }}
+                      className="w-16 text-center"
                     />
                   </td>
                   <td>₹{(it.price * it.qty * (it.traitPercentage / 100)).toFixed(2)}</td>
@@ -249,7 +276,7 @@ export default function SalesPage() {
       )}
 
       {/* Customer Info */}
-      <Card className="p-4 mt-4 mx-4">
+      <Card className="p-4 mt-4 mx-4 space-y-3">
         <h3 className="text-center font-bold underline mb-2">Customer Info</h3>
         <Input
           label="Name"
@@ -263,7 +290,7 @@ export default function SalesPage() {
         />
       </Card>
 
-      {/* Submit */}
+      {/* Submit Button */}
       <div style={{ textAlign: "center", marginTop: "30px" }}>
         <Button
           onClick={submitSale}
