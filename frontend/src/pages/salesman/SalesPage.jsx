@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import Header from '../../components/ui/Header';
 import api from '../../lib/api';
 import logo from "../../assets/logo.png";
+import beepSound from "../../assets/beep.mp3";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -14,7 +15,10 @@ export default function SalesPage() {
   const [items, setItems] = useState([]);
   const [customer, setCustomer] = useState({ name: '', phone: '' });
   const [manualBarcode, setManualBarcode] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+  const scannerRef = useRef(null);
   const navigate = useNavigate();
+  const beepRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -26,6 +30,50 @@ export default function SalesPage() {
       navigate('/login');
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (showScanner && !scannerRef.current) {
+      scannerRef.current = new Html5QrcodeScanner(
+        "reader",
+        {
+          fps: 10,
+          qrbox: 250,
+          rememberLastUsedCamera: true,
+          supportedScanTypes: [Html5QrcodeScanner.SCAN_TYPE_CAMERA],
+          formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128],
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
+          aspectRatio: 1.777,
+          videoConstraints: {
+            facingMode: { exact: "environment" } // rear camera only
+          }
+        },
+        false
+      );
+
+      scannerRef.current.render(
+        async (decodedText) => {
+          beepRef.current?.play();
+          setManualBarcode(decodedText);
+          await handleManualEntry(decodedText);
+          scannerRef.current.clear();
+          scannerRef.current = null;
+          setShowScanner(false);
+        },
+        (error) => {
+          // ignore scan errors
+        }
+      );
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear();
+        scannerRef.current = null;
+      }
+    };
+  }, [showScanner]);
 
   const handleManualEntry = async (code) => {
     if (!code) return;
@@ -93,8 +141,9 @@ export default function SalesPage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "Segoe UI, sans-serif" }}>
       <ToastContainer position="top-center" />
-      
-      {/* ✅ Full-width Red Header */}
+      <audio ref={beepRef} src={beepSound} preload="auto" />
+
+      {/* Header */}
       <div style={{
         width: "100vw",
         background: "#B71C1C",
@@ -125,7 +174,7 @@ export default function SalesPage() {
         </button>
       </div>
 
-      {/* Barcode Input */}
+      {/* Barcode Entry */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -142,6 +191,25 @@ export default function SalesPage() {
           />
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
+
+        <div style={{ textAlign: "center", marginTop: "10px" }}>
+          <Button
+            onClick={() => setShowScanner(!showScanner)}
+            className="bg-green-600 text-white py-2 px-4 rounded-full text-sm"
+          >
+            {showScanner ? "Close Scanner" : "Scan with Camera"}
+          </Button>
+        </div>
+
+        {showScanner && (
+          <div id="reader" style={{
+            width: "100%",
+            marginTop: "12px",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            overflow: "hidden"
+          }} />
+        )}
       </Card>
 
       {/* Scanned Items Table */}
