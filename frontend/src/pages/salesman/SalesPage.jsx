@@ -61,7 +61,6 @@ export default function SalesPage() {
         if (capabilities.zoom) {
           const zoom = Math.min(capabilities.zoom.max, 2.5);
           await videoTrack.applyConstraints({ advanced: [{ zoom }] });
-          console.log(`✅ Zoom set to ${zoom}`);
         }
 
         html5QrCode = new Html5Qrcode("reader", {
@@ -96,7 +95,7 @@ export default function SalesPage() {
 
             await handleManualEntry(decodedText);
           },
-          (error) => { /* silent */ }
+          (error) => {}
         );
 
         scannerRef.current = html5QrCode;
@@ -213,29 +212,32 @@ export default function SalesPage() {
       {/* Barcode Input + Scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <input
-            value={manualBarcode}
-            placeholder="Enter barcode"
-            onChange={(e) => setManualBarcode(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "8px"
-            }}
-          />
-          <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
-        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <input
+              value={manualBarcode}
+              placeholder="Enter barcode"
+              onChange={(e) => setManualBarcode(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "8px"
+              }}
+            />
+            <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
+          </div>
 
-        <div id="reader" style={{
-          width: "100%",
-          marginTop: "16px",
-          border: "1px solid #ccc",
-          borderRadius: "10px",
-          overflow: "hidden",
-          minHeight: "100px"
-        }} />
+          <div id="reader" style={{
+            width: "100%",
+            maxWidth: "320px",
+            height: "140px",
+            margin: "0 auto",
+            border: "1px solid #ccc",
+            borderRadius: "10px",
+            overflow: "hidden"
+          }} />
+        </div>
       </Card>
 
       {/* Scanned Items Table */}
@@ -256,11 +258,17 @@ export default function SalesPage() {
                   <td style={{ padding: "10px" }}>{i + 1}</td>
                   <td>{it.barcode}</td>
                   <td>
-                    <Input
+                    <input
                       type="number"
                       value={it.qty}
                       onChange={(e) => updateQty(i, +e.target.value)}
-                      className="w-16 text-center"
+                      style={{
+                        width: "60px",
+                        textAlign: "center",
+                        padding: "6px",
+                        border: "1px solid #ccc",
+                        borderRadius: "6px"
+                      }}
                     />
                   </td>
                   <td>₹{(it.price * it.qty * (it.traitPercentage / 100)).toFixed(2)}</td>
