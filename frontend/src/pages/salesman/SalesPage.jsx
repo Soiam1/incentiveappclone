@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -15,10 +15,9 @@ export default function SalesPage() {
   const [items, setItems] = useState([]);
   const [customer, setCustomer] = useState({ name: '', phone: '' });
   const [manualBarcode, setManualBarcode] = useState('');
-  const [showScanner, setShowScanner] = useState(false);
   const scannerRef = useRef(null);
-  const navigate = useNavigate();
   const beepRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     try {
@@ -32,48 +31,52 @@ export default function SalesPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (showScanner && !scannerRef.current) {
-      scannerRef.current = new Html5QrcodeScanner(
-        "reader",
-        {
-          fps: 10,
-          qrbox: 250,
-          rememberLastUsedCamera: true,
-          supportedScanTypes: [Html5QrcodeScanner.SCAN_TYPE_CAMERA],
-          formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128],
-          experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true,
-          },
-          aspectRatio: 1.777,
-          videoConstraints: {
-            facingMode: { ideal: "environment" } // rear camera only
-          }
-        },
-        false
-      );
+    const html5QrCode = new Html5Qrcode("reader", {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+      ]
+    });
 
-      scannerRef.current.render(
-        async (decodedText) => {
-          beepRef.current?.play();
-          setManualBarcode(decodedText);
-          await handleManualEntry(decodedText);
-          scannerRef.current.clear();
-          scannerRef.current = null;
-          setShowScanner(false);
-        },
-        (error) => {
-          // ignore scan errors
-        }
-      );
-    }
+    Html5Qrcode.getCameras().then((devices) => {
+      if (!devices || devices.length === 0) return;
+      const rear = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+
+      html5QrCode
+        .start(
+          { deviceId: { exact: rear.id } },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 100 },
+            videoConstraints: { facingMode: { ideal: "environment" } }
+          },
+          async (decodedText) => {
+            beepRef.current?.play();
+            await handleManualEntry(decodedText);
+            await new Promise(res => setTimeout(res, 1000)); // avoid multiple scans
+          },
+          (error) => {
+            // silent scan error
+          }
+        )
+        .catch(err => {
+          console.error("Camera error", err);
+        });
+
+      scannerRef.current = html5QrCode;
+    });
 
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.clear();
-        scannerRef.current = null;
+        scannerRef.current.stop().then(() => {
+          scannerRef.current.clear();
+        });
       }
     };
-  }, [showScanner]);
+  }, []);
 
   const handleManualEntry = async (code) => {
     if (!code) return;
@@ -156,25 +159,7 @@ export default function SalesPage() {
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Back Button */}
-      <div style={{ padding: "20px 20px 0" }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            backgroundColor: "#fff",
-            border: "1px solid #e60000",
-            color: "#e60000",
-            padding: "8px 16px",
-            borderRadius: "999px",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          ← Back
-        </button>
-      </div>
-
-      {/* Barcode Entry */}
+      {/* Barcode Input */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -192,24 +177,15 @@ export default function SalesPage() {
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: "10px" }}>
-          <Button
-            onClick={() => setShowScanner(!showScanner)}
-            className="bg-green-600 text-white py-2 px-4 rounded-full text-sm"
-          >
-            {showScanner ? "Close Scanner" : "Scan with Camera"}
-          </Button>
-        </div>
-
-        {showScanner && (
-          <div id="reader" style={{
-            width: "100%",
-            marginTop: "12px",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            overflow: "hidden"
-          }} />
-        )}
+        {/* Scanner Box */}
+        <div id="reader" style={{
+          width: "100%",
+          marginTop: "16px",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          overflow: "hidden",
+          minHeight: "180px"
+        }} />
       </Card>
 
       {/* Scanned Items Table */}
