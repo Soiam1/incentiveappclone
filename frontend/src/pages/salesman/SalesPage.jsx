@@ -59,7 +59,7 @@ export default function SalesPage() {
 
         const capabilities = videoTrack.getCapabilities();
         if (capabilities.zoom) {
-          const zoom = Math.min(capabilities.zoom.max, 2.5);
+          const zoom = Math.min(capabilities.zoom.max, 3);
           await videoTrack.applyConstraints({ advanced: [{ zoom }] });
           console.log(`✅ Zoom set to ${zoom}`);
         }
