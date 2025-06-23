@@ -15,11 +15,8 @@ export default function SalesPage() {
   const [items, setItems] = useState([]);
   const [customer, setCustomer] = useState({ name: '', phone: '' });
   const [manualBarcode, setManualBarcode] = useState('');
-  const [isTorchOn, setIsTorchOn] = useState(false);
-
   const scannerRef = useRef(null);
   const beepRef = useRef(null);
-  const videoTrackRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,71 +31,55 @@ export default function SalesPage() {
   }, [navigate]);
 
   useEffect(() => {
-    let html5QrCode;
-    const lastScanned = { code: "", time: 0 };
+    const html5QrCode = new Html5Qrcode("reader", {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E
+      ]
+    });
 
-    async function startScanner() {
-      try {
-        const devices = await Html5Qrcode.getCameras();
-        if (!devices.length) throw new Error("No camera found");
-
-        const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
-
-        html5QrCode = new Html5Qrcode("reader", {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-          ]
-        });
-
-        await html5QrCode.start(
-          { deviceId: { exact: rearCam.id } },
-          {
-            fps: 10,
-            qrbox: { width: 300, height: 100 },
-            videoConstraints: {
-              deviceId: rearCam.id,
-              facingMode: { ideal: "environment" }
-            }
-          },
-          async (decodedText) => {
-            const now = Date.now();
-            if (decodedText === lastScanned.code && now - lastScanned.time < 2000) return;
-
-            lastScanned.code = decodedText;
-            lastScanned.time = now;
-
-            beepRef.current?.play();
-            await handleManualEntry(decodedText);
-          },
-          (error) => { /* silent */ }
-        );
-
-        scannerRef.current = html5QrCode;
-
-        // save track for torch
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { deviceId: rearCam.id }
-        });
-        videoTrackRef.current = stream.getVideoTracks()[0];
-
-      } catch (err) {
-        console.error("Camera init failed:", err);
-        toast.error("Camera access failed. Try HTTPS or allow permissions.");
+    Html5Qrcode.getCameras().then(devices => {
+      if (!devices.length) {
+        toast.error("No camera found");
+        return;
       }
-    }
 
-    startScanner();
+      const rearCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+
+      html5QrCode.start(
+        { deviceId: { exact: rearCam.id } },
+        {
+          fps: 10,
+          qrbox: { width: 300, height: 100 },
+          videoConstraints: {
+            deviceId: rearCam.id
+          }
+        },
+        async (decodedText) => {
+          if (scannerRef.current?.lastCode === decodedText &&
+              Date.now() - scannerRef.current?.lastTime < 2000) return;
+
+          scannerRef.current.lastCode = decodedText;
+          scannerRef.current.lastTime = Date.now();
+
+          beepRef.current?.play();
+          await handleManualEntry(decodedText);
+
+          await html5QrCode.pause(true);
+          setTimeout(() => html5QrCode.resume(), 2000);
+        },
+        (err) => {}
+      );
+
+      scannerRef.current = html5QrCode;
+    });
 
     return () => {
       if (scannerRef.current) {
         scannerRef.current.stop().then(() => scannerRef.current.clear());
-      }
-      if (videoTrackRef.current) {
-        videoTrackRef.current.stop();
       }
     };
   }, []);
@@ -112,24 +93,6 @@ export default function SalesPage() {
     document.addEventListener("click", unlockAudio);
     document.addEventListener("touchstart", unlockAudio);
   }, []);
-
-  const toggleTorch = async () => {
-    const track = videoTrackRef.current;
-    if (!track) return;
-    const capabilities = track.getCapabilities();
-    if (capabilities.torch) {
-      try {
-        await track.applyConstraints({
-          advanced: [{ torch: !isTorchOn }]
-        });
-        setIsTorchOn(prev => !prev);
-      } catch (err) {
-        toast.error("Torch not supported.");
-      }
-    } else {
-      toast.error("Torch not available on this device.");
-    }
-  };
 
   const handleManualEntry = async (code) => {
     if (!code) return;
@@ -212,60 +175,37 @@ export default function SalesPage() {
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Barcode Input + Scanner */}
+      {/* Manual Entry + Scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <input
-              value={manualBarcode}
-              placeholder="Enter barcode"
-              onChange={(e) => setManualBarcode(e.target.value)}
-              style={{
-                flex: 1,
-                padding: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "8px"
-              }}
-            />
-            <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
-          </div>
-
-          {/* Scanner Box + Frame */}
-          <div style={{ position: "relative", marginTop: "16px", marginBottom: "10px" }}>
-            <div id="reader" style={{
-              width: "100%",
-              maxWidth: "480px",
-              height: "240px",
-              margin: "0 auto",
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <input
+            value={manualBarcode}
+            placeholder="Enter barcode"
+            onChange={(e) => setManualBarcode(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "10px",
               border: "1px solid #ccc",
-              borderRadius: "10px",
-              overflow: "hidden"
-            }} />
-
-            <div style={{
-              position: "absolute",
-              top: "16px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "300px",
-              height: "100px",
-              border: "2px solid #ffffff",
-              borderRadius: "4px",
-              boxShadow: "0 0 8px rgba(255,255,255,0.8)"
-            }} />
-          </div>
-
-          {/* Torch Toggle */}
-          <div style={{ textAlign: "center" }}>
-            <Button onClick={toggleTorch}>
-              {isTorchOn ? "Turn Off Flash" : "Turn On Flash"}
-            </Button>
-          </div>
+              borderRadius: "8px"
+            }}
+          />
+          <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
+
+        {/* Scanner */}
+        <div id="reader" style={{
+          width: "100%",
+          maxWidth: "480px",
+          height: "240px",
+          marginTop: "20px",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          overflow: "hidden"
+        }} />
       </Card>
 
-      {/* Scanned Items Table */}
+      {/* Items Table */}
       {items.length > 0 && (
         <Card className="p-4 mt-4 mx-4 overflow-x-auto">
           <table style={{ width: "100%", fontSize: "14px", textAlign: "center", borderCollapse: "collapse" }}>
@@ -309,7 +249,7 @@ export default function SalesPage() {
       )}
 
       {/* Customer Info */}
-      <Card className="p-4 mt-4 mx-4 space-y-3">
+      <Card className="p-4 mt-4 mx-4">
         <h3 className="text-center font-bold underline mb-2">Customer Info</h3>
         <Input
           label="Name"
@@ -323,7 +263,7 @@ export default function SalesPage() {
         />
       </Card>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <div style={{ textAlign: "center", marginTop: "30px" }}>
         <Button
           onClick={submitSale}
