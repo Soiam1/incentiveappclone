@@ -28,7 +28,7 @@ app = FastAPI(title="Incentive Management System")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://incentive-app-vert.vercel.app","https://institution-acknowledge-neighbor-peru.trycloudflare.com"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
