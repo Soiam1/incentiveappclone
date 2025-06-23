@@ -46,7 +46,7 @@ export default function SalesPage() {
           },
           aspectRatio: 1.777,
           videoConstraints: {
-            facingMode: { exact: "environment" } // rear camera only
+            facingMode: { ideal: "environment" } // rear camera only
           }
         },
         false
