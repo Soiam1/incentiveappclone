@@ -48,21 +48,13 @@ export default function SalesPage() {
           video: {
             deviceId: rearCam.id,
             facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            advanced: [{ zoom: 2.5 }]
+            width: 640,
+            height: 240
           }
         };
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         videoTrack = stream.getVideoTracks()[0];
-
-        const capabilities = videoTrack.getCapabilities();
-        if (capabilities.zoom) {
-          const zoom = Math.min(capabilities.zoom.max, 2.5);
-          await videoTrack.applyConstraints({ advanced: [{ zoom }] });
-          console.log(`✅ Zoom set to ${zoom}`);
-        }
 
         html5QrCode = new Html5Qrcode("reader", {
           formatsToSupport: [
@@ -79,24 +71,21 @@ export default function SalesPage() {
           {
             fps: 10,
             qrbox: { width: 250, height: 75 },
-            videoConstraints: {
-              deviceId: rearCam.id
-            }
+            videoConstraints: constraints.video
           },
           async (decodedText) => {
             const now = Date.now();
             if (decodedText === lastScanned.current && now - lastScannedAt.current < 2000) return;
-
             lastScanned.current = decodedText;
             lastScannedAt.current = now;
 
             try {
               await beepRef.current?.play();
-            } catch (e) {}
+            } catch {}
 
             await handleManualEntry(decodedText);
           },
-          (error) => { /* silent */ }
+          () => {}
         );
 
         scannerRef.current = html5QrCode;
@@ -118,7 +107,6 @@ export default function SalesPage() {
     };
   }, []);
 
-  // 🔊 Unlock beep sound on any touch/click
   useEffect(() => {
     const unlockAudio = () => {
       beepRef.current?.play().catch(() => {});
@@ -197,20 +185,10 @@ export default function SalesPage() {
       <ToastContainer position="top-center" />
       <audio ref={beepRef} src={beepSound} preload="auto" />
 
-      {/* Header */}
-      <div style={{
-        width: "100vw",
-        background: "#B71C1C",
-        padding: "12px 0",
-        marginLeft: "-8px",
-        marginRight: "-8px",
-        textAlign: "center",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
-      }}>
+      <div style={{ width: "100vw", background: "#B71C1C", padding: "12px 0", marginLeft: "-8px", marginRight: "-8px", textAlign: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
         <img src={logo} alt="Logo" style={{ height: "40px" }} />
       </div>
 
-      {/* Barcode Input + Scanner */}
       <Card className="p-4 mt-4 mx-4">
         <h3 className="font-semibold text-center mb-2">Enter Barcode Manually</h3>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -218,27 +196,14 @@ export default function SalesPage() {
             value={manualBarcode}
             placeholder="Enter barcode"
             onChange={(e) => setManualBarcode(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "8px"
-            }}
+            style={{ flex: 1, padding: "10px", border: "1px solid #ccc", borderRadius: "8px" }}
           />
           <Button onClick={() => handleManualEntry(manualBarcode)}>Add</Button>
         </div>
 
-        <div id="reader" style={{
-          width: "100%",
-          marginTop: "16px",
-          border: "1px solid #ccc",
-          borderRadius: "10px",
-          overflow: "hidden",
-          minHeight: "100px"
-        }} />
+        <div id="reader" style={{ marginTop: "16px", width: "100%", maxWidth: 300, height: 100, margin: "12px auto", border: "2px dashed #ccc", borderRadius: "10px" }} />
       </Card>
 
-      {/* Scanned Items Table */}
       {items.length > 0 && (
         <Card className="p-4 mt-4 mx-4 overflow-x-auto">
           <table style={{ width: "100%", fontSize: "14px", textAlign: "center", borderCollapse: "collapse" }}>
@@ -260,7 +225,7 @@ export default function SalesPage() {
                       type="number"
                       value={it.qty}
                       onChange={(e) => updateQty(i, +e.target.value)}
-                      className="w-16 text-center"
+                      className="w-12 text-center"
                     />
                   </td>
                   <td>₹{(it.price * it.qty * (it.traitPercentage / 100)).toFixed(2)}</td>
@@ -275,7 +240,6 @@ export default function SalesPage() {
         </Card>
       )}
 
-      {/* Customer Info */}
       <Card className="p-4 mt-4 mx-4 space-y-3">
         <h3 className="text-center font-bold underline mb-2">Customer Info</h3>
         <Input
@@ -290,7 +254,6 @@ export default function SalesPage() {
         />
       </Card>
 
-      {/* Submit Button */}
       <div style={{ textAlign: "center", marginTop: "30px" }}>
         <Button
           onClick={submitSale}
