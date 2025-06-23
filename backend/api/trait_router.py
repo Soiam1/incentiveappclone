@@ -19,7 +19,7 @@ def get_db():
 @router.get("/traits", response_model=list[dict])
 def get_all_traits(
     db: Session = Depends(get_db),
-    admin=Depends(get_current_user_role("admin"))
+    
 ):
     """
     Admin: Get all trait configurations.
@@ -61,7 +61,7 @@ def create_trait_config(
     db: Session = Depends(get_db),
     admin=Depends(get_current_user_role("admin"))
 ):
-    created = trait_config_crud.create_trait(db, payload.trait, payload.percentage, payload.is_visible)
+    created = trait_config_crud.create_trait(db, payload.trait, payload.percentage, True)
     return {
         "message": "Trait created",
         "trait": created.trait
